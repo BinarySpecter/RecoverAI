@@ -66,7 +66,19 @@ export async function POST(req: NextRequest) {
       include: { customer: true, failure: true },
     })
 
-    return ok({ payment: full, pipeline })
+    // The diagnosis behind the pipeline's recommendation, for the live demo view.
+    const analysis = await db.aIAnalysis.findUnique({
+      where: { id: pipeline.analysisId },
+      select: {
+        failureCategory: true,
+        rootCause: true,
+        confidence: true,
+        reasoning: true,
+        estimatedRecoveryProbability: true,
+      },
+    })
+
+    return ok({ payment: full, pipeline, analysis })
   } catch (err) {
     return handleRouteError(err)
   }

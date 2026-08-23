@@ -34,10 +34,19 @@ const METHODS = ["CARD", "UPI", "NETBANKING", "WALLET"] as const
 interface PipelineResult {
   actionType: string
   policyDecision: string
+  policyReason?: string
   status: string
   outcome?: string
   outcomeDetail?: string
   paymentId: string
+}
+
+interface SimAnalysis {
+  failureCategory: string
+  rootCause: string
+  confidence: number
+  reasoning: string
+  estimatedRecoveryProbability: number
 }
 
 interface SimPayment {
@@ -57,7 +66,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false)
   const [running, setRunning] = useState(false)
   const [steps, setSteps] = useState<Record<string, StepState>>({})
-  const [result, setResult] = useState<{ ok: boolean; message: string; pipeline?: PipelineResult; payment?: SimPayment } | null>(null)
+  const [result, setResult] = useState<{ ok: boolean; message: string; pipeline?: PipelineResult; payment?: SimPayment; analysis?: SimAnalysis | null } | null>(null)
   const [bannerShown, setBannerShown] = useState(false)
   const router = useRouter()
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -82,8 +91,10 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
     setSteps({ failed: "active" })
 
     // Animate the first three stages while the server runs the real pipeline.
-    timers.current.push(setTimeout(() => setSteps((s) => ({ ...s, failed: "done", diagnosis: "active" })), 350))
-    timers.current.push(setTimeout(() => setSteps((s) => ({ ...s, diagnosis: "done", policy: "active" })), 750))
+    // If the server answers before a timer fires, never downgrade an already-
+    // completed step back to "active" (the race left Policy spinning forever).
+    timers.current.push(setTimeout(() => setSteps((s) => (s.diagnosis === "done" ? s : { ...s, failed: "done", diagnosis: "active" })), 350))
+    timers.current.push(setTimeout(() => setSteps((s) => (s.policy === "done" ? s : { ...s, diagnosis: "done", policy: "active" })), 750))
 
     try {
       const res = await fetch("/api/payments/simulate-failure", {
@@ -105,7 +116,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
       timers.current.push(
         setTimeout(() => {
           setSteps((s) => ({ ...s, outcome: "done" }))
-          setResult({ ok: true, message: "Pipeline complete", pipeline: json.data.pipeline, payment: json.data.payment })
+          setResult({ ok: true, message: "Pipeline complete", pipeline: json.data.pipeline, payment: json.data.payment, analysis: json.data.analysis })
           setRunning(false)
           router.refresh()
         }, 520),
@@ -121,6 +132,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
   }
 
   const p = result?.pipeline
+  const a = result?.analysis
   const paymentAmount = result?.payment ? result.payment.amount / 100 : Number(amount)
 
   return (
@@ -235,7 +247,8 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
             {(running || result) && p && (
               <div className="px-5 py-4">
                 <ol className="relative" aria-label="Recovery pipeline progress">
-                  {[
+                  {([
+
                     {
                       key: "failed",
                       label: "Payment failed",
@@ -246,13 +259,19 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
                       key: "diagnosis",
                       label: "AI diagnosis",
                       icon: Brain,
-                      detail: p ? `${p.actionType.replace(/_/g, " ").toLowerCase()} recommended` : "",
+                      detail: a
+                        ? `${a.failureCategory.replace(/_/g, " ").toLowerCase()} · ${Math.round(a.confidence * 100)}% confidence`
+                        : p
+                          ? `${p.actionType.replace(/_/g, " ").toLowerCase()} recommended`
+                          : "",
+                      sub: a?.rootCause,
                     },
                     {
                       key: "policy",
                       label: "Policy check",
                       icon: Scale,
                       detail: p ? (p.policyDecision === "APPROVED" ? "approved" : p.policyDecision === "NEEDS_APPROVAL" ? "approval required" : "rejected") : "",
+                      sub: p?.policyReason,
                     },
                     {
                       key: "action",
@@ -274,7 +293,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
                               : "not recovered"
                         : "",
                     },
-                  ].map((step, i, arr) => {
+                  ] as { key: string; label: string; icon: typeof Server; detail: string; sub?: string }[]).map((step, i, arr) => {
                     const state = steps[step.key] ?? "idle"
                     if (state === "idle") return null
                     const done = state === "done"
@@ -304,6 +323,9 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
                           </p>
                           {done && step.detail && (
                             <p className="mt-0.5 text-[11.5px] leading-snug text-ink-faint">{step.detail}</p>
+                          )}
+                          {done && step.sub && (
+                            <p className="mt-0.5 text-[11px] leading-snug text-ink-faint">{step.sub}</p>
                           )}
                         </div>
                       </li>
