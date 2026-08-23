@@ -1,0 +1,157 @@
+// RecoverAI database schema
+// SQLite for zero-setup demos. Enum-like fields are Strings validated by Zod
+// in the app layer because Prisma enums are unsupported on SQLite; this also
+// keeps the schema portable to PostgreSQL (change provider + url only).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  customers Customer[]
+  payments  Payment[]
+  auditLogs AuditLog[]
+}
+
+model Customer {
+  id                  String   @id @default(cuid())
+  merchantId          String
+  merchant            Merchant @relation(fields: [merchantId], references: [id])
+  name                String
+  email               String
+  phone               String?
+  successfulPayments  Int      @default(0)
+  failedPayments      Int      @default(0)
+  lifetimeValue       Int      @default(0) // paise
+  avgOrderValue       Int      @default(0) // paise
+  subscriptionActive  Boolean  @default(false)
+  subscriptionPlan    String?
+  riskScore           Float    @default(0) // 0..1 fraud/chargeback signal
+  createdAt           DateTime @default(now())
+  payments            Payment[]
+
+  @@unique([merchantId, email])
+  @@index([merchantId])
+}
+
+model Payment {
+  id          String           @id @default(cuid())
+  merchantId  String
+  merchant    Merchant         @relation(fields: [merchantId], references: [id])
+  customerId  String
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  orderId     String           @unique
+  paymentRef  String? // gateway payment id, e.g. pay_xxx
+  amount      Int // paise
+  currency    String           @default("INR")
+  status      String           @default("PENDING") // PENDING|CAPTURED|FAILED|RECOVERED
+  method      String // CARD|UPI|NETBANKING|WALLET
+  description String?
+  source      String           @default("SEED") // SEED|SIMULATION|WEBHOOK
+  retryCount  Int              @default(0)
+  recoveredAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  attempts    PaymentAttempt[]
+  failure     FailureEvent?
+  analyses    AIAnalysis[]
+  actions     RecoveryAction[]
+
+  @@index([merchantId, status])
+  @@index([customerId])
+}
+
+model PaymentAttempt {
+  id            String   @id @default(cuid())
+  paymentId     String
+  payment       Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  attemptNo     Int
+  status        String // FAILED|CAPTURED
+  gatewayCode   String? // raw gateway code, e.g. card_declined
+  gatewayMessage String?
+  latencyMs     Int?
+  createdAt     DateTime @default(now())
+
+  @@unique([paymentId, attemptNo])
+}
+
+model FailureEvent {
+  id         String   @id @default(cuid())
+  paymentId  String   @unique
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  category   String // normalized FailureCategory
+  rawCode    String?
+  rawMessage String?
+  detectedAt DateTime @default(now())
+}
+
+model AIAnalysis {
+  id                          String   @id @default(cuid())
+  paymentId                   String
+  payment                     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  provider                    String // mock|gemini|deepseek|fallback
+  model                       String?
+  failureCategory             String
+  rootCause                   String
+  confidence                  Float
+  severity                    String // low|medium|high|critical
+  recommendedAction           String // RecoveryActionType
+  reasoning                   String
+  customerContext             String
+  estimatedRecoveryProbability Float
+  latencyMs                   Int?
+  usedFallback                Boolean  @default(false)
+  rawOutput                   String? // raw provider response for audit
+  createdAt                   DateTime @default(now())
+  actions                     RecoveryAction[]
+
+  @@index([paymentId])
+}
+
+model RecoveryAction {
+  id                          String      @id @default(cuid())
+  paymentId                   String
+  payment                     Payment     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  analysisId                  String?
+  analysis                    AIAnalysis? @relation(fields: [analysisId], references: [id])
+  actionType                  String // bounded RecoveryActionType
+  policyDecision              String // APPROVED|REJECTED|NEEDS_APPROVAL
+  policyReason                String
+  status                      String      @default("PENDING") // PENDING|AWAITING_APPROVAL|EXECUTING|EXECUTED|RECOVERED|FAILED|REJECTED
+  riskLevel                   String // LOW|MEDIUM|HIGH
+  estimatedRecoveryProbability Float
+  executedAt                  DateTime?
+  completedAt                 DateTime?
+  outcome                     String? // RECOVERED|FAILED|PENDING
+  outcomeDetail               String?
+  approvedBy                  String?
+  createdAt                   DateTime      @default(now())
+
+  @@index([paymentId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+  paymentId  String?
+  level      String   @default("info") // info|warn|error
+  actor      String // SYSTEM|AI:mock|POLICY|MERCHANT|GATEWAY
+  event      String // e.g. payment.failed, ai.analysis.completed
+  message    String
+  data       String? // JSON string payload
+  createdAt  DateTime @default(now())
+
+  @@index([merchantId, createdAt])
+  @@index([paymentId])
+}
