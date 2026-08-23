@@ -1,6 +1,74 @@
 import type { ReactNode } from "react"
 import { formatINR } from "@/lib/types"
 
+/** ---------- Surfaces ---------- */
+
+/** Elevated panel — reserved for the one or two most important surfaces on a page. */
+export function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <section
+      className={`rounded-[10px] border border-line bg-surface shadow-[0_1px_3px_rgba(2,4,43,0.06),0_1px_2px_rgba(2,4,43,0.04)] ${className}`}
+    >
+      {children}
+    </section>
+  )
+}
+
+/** Open canvas section — title over a hairline rule, no box chrome. */
+export function OpenSection({
+  title,
+  hint,
+  action,
+  children,
+  className = "",
+}: {
+  title: string
+  hint?: string
+  action?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <section className={className}>
+      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-3">
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
+          {hint && <span className="text-[11.5px] text-ink-faint">{hint}</span>}
+        </div>
+        {action}
+      </header>
+      <div className="border-t border-line-strong/70" aria-hidden />
+      {children}
+    </section>
+  )
+}
+
+/** Status as dot + small-caps text — the non-pill treatment for dense tables. */
+export function StatusText({ value, className = "" }: { value: string; className?: string }) {
+  const tone =
+    /RECOVERED|CAPTURED|APPROVED/.test(value)
+      ? "text-good"
+      : /FAILED|REJECTED/.test(value)
+        ? "text-risk"
+        : /AWAITING_APPROVAL|NEEDS_APPROVAL|PENDING/.test(value)
+          ? "text-warn"
+          : "text-ink-soft"
+  const dot =
+    /RECOVERED|CAPTURED|APPROVED/.test(value)
+      ? "bg-good"
+      : /FAILED|REJECTED/.test(value)
+        ? "bg-risk"
+        : /AWAITING_APPROVAL|NEEDS_APPROVAL|PENDING/.test(value)
+          ? "bg-warn"
+          : "bg-ink-faint"
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.06em] uppercase ${tone} ${className}`}>
+      <span aria-hidden className={`h-[5px] w-[5px] rounded-full ${dot}`} />
+      {humanize(value)}
+    </span>
+  )
+}
+
 /** ---------- Cards ---------- */
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {

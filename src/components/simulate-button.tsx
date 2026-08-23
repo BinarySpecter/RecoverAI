@@ -127,7 +127,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-2 rounded-lg bg-brand text-white font-medium shadow-[0_1px_2px_rgba(2,4,43,0.2),inset_0_1px_0_rgba(255,255,255,0.14)] hover:bg-brand-deep active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer ${
+        className={`inline-flex items-center gap-2 rounded-lg bg-ink font-semibold text-white shadow-[0_1px_3px_rgba(2,4,43,0.25)] hover:bg-navy-soft active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer ${
           compact ? "px-3 py-1.5 text-[12.5px]" : "px-4 py-2 text-[13.5px]"
         }`}
       >

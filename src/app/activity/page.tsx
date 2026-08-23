@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { ScrollText } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { Card, CardHeader, EmptyState, Eyebrow } from "@/components/ui"
-import { AuditTimeline, PipelineStageStrip } from "@/components/audit-timeline"
+import { OpenSection } from "@/components/ui"
+import { AuditTimeline } from "@/components/audit-timeline"
 import { db, getMerchant } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
@@ -33,35 +33,33 @@ export default async function ActivityPage({
       title="Activity & Audit"
       subtitle="Append-only trail of every pipeline decision — AI, policy, gateway, merchant"
     >
-      <Card>
-        <CardHeader
-          eyebrow="Immutable record"
-          title="Audit log"
-          subtitle={`${logs.length} ${logs.length === 1 ? "entry" : "entries"}${activeLevel !== "all" ? ` · ${activeLevel} level` : ""}`}
-          action={
-            <nav className="flex gap-0.5 rounded-lg border border-line p-0.5" aria-label="Filter by level">
-              {LEVELS.map((l) => (
-                <Link
-                  key={l}
-                  href={l === "all" ? "/activity" : `/activity?level=${l}`}
-                  aria-current={activeLevel === l ? "true" : undefined}
-                  className={`rounded-md px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
-                    activeLevel === l ? "bg-ink text-white" : "text-ink-soft hover:bg-surface-sunken"
-                  }`}
-                >
-                  {l}
-                </Link>
-              ))}
-            </nav>
-          }
-        />
-        <PipelineStageStrip />
+      <OpenSection
+        title="Audit log"
+        hint={`${logs.length} ${logs.length === 1 ? "entry" : "entries"}${activeLevel !== "all" ? ` · ${activeLevel} level` : ""} · what happened, who caused it, when, why`}
+        action={
+          <nav className="flex gap-0.5 rounded-lg border border-line p-0.5" aria-label="Filter by level">
+            {LEVELS.map((l) => (
+              <Link
+                key={l}
+                href={l === "all" ? "/activity" : `/activity?level=${l}`}
+                aria-current={activeLevel === l ? "true" : undefined}
+                className={`rounded-md px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                  activeLevel === l ? "bg-ink text-white" : "text-ink-soft hover:bg-surface-sunken"
+                }`}
+              >
+                {l}
+              </Link>
+            ))}
+          </nav>
+        }
+      >
         {logs.length === 0 ? (
-          <div className="border-t border-line/70">
-            <EmptyState icon={<ScrollText size={26} strokeWidth={1.6} />} title="No audit entries" />
+          <div className="flex flex-col items-center gap-2 border-b border-line py-16 text-center">
+            <ScrollText size={24} strokeWidth={1.5} className="text-ink-faint/50" aria-hidden />
+            <p className="text-[13.5px] font-medium text-ink-soft">No audit entries</p>
           </div>
         ) : (
-          <div className="max-h-[calc(100vh-260px)] overflow-y-auto border-t border-line/70 pt-3">
+          <div className="border-b border-line">
             <AuditTimeline
               entries={logs}
               dense
@@ -77,12 +75,7 @@ export default async function ActivityPage({
             />
           </div>
         )}
-        {logs.length > 0 && (
-          <p className="border-t border-line/70 px-5 py-2.5">
-            <Eyebrow>WHAT happened · WHO caused it · WHEN · WHY — every entry attributable</Eyebrow>
-          </p>
-        )}
-      </Card>
+      </OpenSection>
     </Shell>
   )
 }

@@ -1,15 +1,25 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #f4f5f7;
-  --color-foreground: #0b1b33;
-  --color-ink: #02042b;
+  /* Canvas + surfaces */
+  --color-background: #f4f5f8;
+  --color-foreground: #101a30;
+  --color-ink: #0b1030;
   --color-ink-soft: #46536e;
   --color-ink-faint: #7d879c;
   --color-surface: #ffffff;
-  --color-surface-sunken: #f8f9fb;
-  --color-line: #e3e7ee;
-  --color-line-strong: #cfd6e0;
+  --color-surface-sunken: #f7f8fa;
+  --color-line: #e4e7ee;
+  --color-line-strong: #cdd3df;
+
+  /* Command sidebar */
+  --color-navy: #0b1030;
+  --color-navy-soft: #171e4a;
+  --color-navy-line: #232b5c;
+  --color-navy-text: #a8b1d6;
+  --color-navy-bright: #ffffff;
+
+  /* Semantic */
   --color-brand: #2b6bf3;
   --color-brand-deep: #0b50cf;
   --color-brand-soft: #e9f0fe;
@@ -21,6 +31,7 @@
   --color-warn-soft: #fdf2e2;
   --color-violet: #6d4fe0;
   --color-violet-soft: #efecfb;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -35,6 +46,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  letter-spacing: -0.005em;
 }
 
 ::selection {
@@ -47,12 +59,26 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #c8cfdb transparent;
+/* Display money — the strongest type on any page */
+.display-money {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 700;
 }
 
-/* One consistent focus treatment across the app */
+/* Micro caps label */
+.label-caps {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c4cbda transparent;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
@@ -78,7 +104,6 @@ body {
   animation: fade-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
-/* Pipeline step reveal — used by the simulation result sequence */
 @keyframes step-in {
   from {
     opacity: 0;
@@ -118,7 +143,6 @@ body {
   animation: pulse-soft 1.6s ease-in-out infinite;
 }
 
-/* Success flash for the recovered-amount banner */
 @keyframes settle-in {
   0% {
     opacity: 0;

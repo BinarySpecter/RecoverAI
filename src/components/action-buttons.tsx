@@ -33,7 +33,7 @@ function useMutation(url: string, method: "POST" = "POST") {
   return { pending, error, run }
 }
 
-export function ApproveRejectButtons({ actionId }: { actionId: string }) {
+export function ApproveRejectButtons({ actionId, compact = false }: { actionId: string; compact?: boolean }) {
   const approve = useMutation(`/api/recovery/${actionId}/approve`)
   const reject = useMutation(`/api/recovery/${actionId}/reject`)
   const busy = approve.pending || reject.pending
@@ -43,18 +43,18 @@ export function ApproveRejectButtons({ actionId }: { actionId: string }) {
         <button
           onClick={() => approve.run()}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-good px-3.5 py-1.5 text-[12.5px] font-semibold text-white hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition-[filter,transform] duration-150 cursor-pointer"
+          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-ink font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-navy-soft active:scale-[0.98] disabled:opacity-50 ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
         >
           {approve.pending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
-          Approve &amp; execute
+          {compact ? "Approve" : "Approve & execute"}
         </button>
         <button
           onClick={() => reject.run({ reason: "Rejected from dashboard" })}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-[12.5px] font-medium text-ink-soft hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50 transition-[background-color,transform] duration-150 cursor-pointer"
+          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line font-medium text-ink-soft transition-[background-color,transform] duration-150 hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50 ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
         >
           {reject.pending ? <Loader2 size={13} className="animate-spin" /> : <X size={13} strokeWidth={3} />}
-          Reject
+          {compact ? "Reject" : "Reject"}
         </button>
       </div>
       {(approve.error || reject.error) && (
@@ -71,10 +71,10 @@ export function RunRecoveryButton({ paymentId, label = "Run AI recovery" }: { pa
       <button
         onClick={() => run()}
         disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-[12.5px] font-semibold text-white hover:bg-brand-deep active:scale-[0.98] disabled:opacity-50 transition-[background-color,transform] duration-150 cursor-pointer"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-[12px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-navy-soft active:scale-[0.98] disabled:opacity-50"
       >
         {pending ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-        {pending ? "Running pipeline…" : label}
+        {pending ? "Running…" : label}
       </button>
       {error && <p className="mt-1.5 text-[12px] text-risk">{error}</p>}
     </div>
