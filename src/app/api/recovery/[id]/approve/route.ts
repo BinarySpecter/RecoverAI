@@ -1,4 +1,4 @@
-import { approveAndExecute, rejectAction } from "@/lib/engine/recovery-engine"
+import { approveAndExecute } from "@/lib/engine/recovery-engine"
 import { ok, handleRouteError } from "@/lib/api-utils"
 
 export const dynamic = "force-dynamic"

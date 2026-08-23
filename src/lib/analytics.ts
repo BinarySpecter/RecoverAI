@@ -63,9 +63,7 @@ export async function getDashboardMetrics(merchantId: string): Promise<Dashboard
     entry.atRisk += p.amount
     categoryMap.set(cat, entry)
   }
-  for (const p of recovered) {
-    // recovered payments keep their original failure category via FailureEvent
-  }
+  // Recovered payments keep their original failure category via FailureEvent
   const recoveredWithCategory = await db.payment.findMany({
     where: { merchantId, status: "RECOVERED" },
     include: { failure: true },

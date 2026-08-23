@@ -9,7 +9,7 @@ import {
   ShieldAlert,
 } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { Card, CardHeader, Badge, Money, timeAgo, EmptyState, timestamp } from "@/components/ui"
+import { Card, CardHeader, Badge, Money, EmptyState, timestamp } from "@/components/ui"
 import { TrendChart, CategoryBars } from "@/components/charts"
 import { ApproveRejectButtons } from "@/components/action-buttons"
 import { getDashboardMetrics } from "@/lib/analytics"

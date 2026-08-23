@@ -1,5 +1,5 @@
 import { GatewayEventSchema } from "@/lib/types"
-import { db, getMerchant } from "@/lib/db"
+import { getMerchant } from "@/lib/db"
 import { normalizeGatewayCode, gatewayMessageFor } from "@/lib/gateway/payment-gateway"
 import { ingestFailure } from "@/lib/engine/ingestion"
 import { runRecoveryPipeline } from "@/lib/engine/recovery-engine"
