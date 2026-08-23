@@ -189,7 +189,7 @@ export default async function SafetyPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] text-[13px]">
               <thead>
-                <tr className="border-b-2 border-ink/80 text-left">
+                <tr className="border-b-2 border-rule text-left">
                   <th scope="col" className="label-caps py-2.5 pr-5 font-semibold text-ink-faint">Action</th>
                   <th scope="col" className="label-caps py-2.5 pr-4 font-semibold text-ink-faint">Risk</th>
                   <th scope="col" className="label-caps py-2.5 pr-4 text-right font-semibold text-ink-faint">Cooldown</th>

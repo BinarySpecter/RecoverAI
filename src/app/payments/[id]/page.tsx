@@ -64,7 +64,7 @@ function DecisionTimeline({
               : null,
     },
   ]
-  const toneBg = { risk: "bg-risk", violet: "bg-violet", brand: "bg-brand", ink: "bg-ink", good: "bg-good", warn: "bg-warn" }
+  const toneBg = { risk: "bg-risk", violet: "bg-violet", brand: "bg-brand", ink: "bg-primary", good: "bg-good", warn: "bg-warn" }
   const currentIdx = steps.findIndex((s) => !s.done)
 
   return (

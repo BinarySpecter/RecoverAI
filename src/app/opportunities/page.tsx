@@ -60,7 +60,7 @@ export default async function OpportunitiesPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[880px] text-[13px]">
               <thead>
-                <tr className="border-b-2 border-ink/80 text-left">
+                <tr className="border-b-2 border-rule text-left">
                   <th scope="col" className="label-caps py-2.5 pr-5 font-semibold text-ink-faint">Customer</th>
                   <th scope="col" className="label-caps py-2.5 pr-5 text-right font-semibold text-ink-faint">Amount</th>
                   <th scope="col" className="label-caps py-2.5 pr-5 font-semibold text-violet/90">AI diagnosis</th>

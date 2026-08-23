@@ -128,7 +128,7 @@ export function CategoryBars({ data }: { data: CategoryDatum[] }) {
             </span>
           </div>
           <div
-            className="flex h-[7px] w-full overflow-hidden rounded-full bg-[#edeff4]"
+            className="flex h-[7px] w-full overflow-hidden rounded-full bg-track"
             role="img"
             aria-label={`${humanizeCategory(d.category)}: ${formatINR(d.recovered)} recovered, ${formatINR(d.atRisk)} at risk`}
           >

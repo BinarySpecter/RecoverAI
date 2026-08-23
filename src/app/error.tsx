@@ -25,7 +25,7 @@ export default function GlobalError({
       <p className="max-w-md text-[13px] leading-relaxed text-ink-soft">
         {needsSeed ? (
           <>
-            Run <code className="rounded bg-[#f1f2f5] px-1.5 py-0.5 font-mono text-[12px]">npm run setup</code> to create
+            Run <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-[12px]">npm run setup</code> to create
             the database and demo data, then reload.
           </>
         ) : (

@@ -43,7 +43,7 @@ export function ApproveRejectButtons({ actionId, compact = false }: { actionId: 
         <button
           onClick={() => approve.run()}
           disabled={busy}
-          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-ink font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-navy-soft active:scale-[0.98] disabled:opacity-50 ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
+          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
         >
           {approve.pending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
           {compact ? "Approve" : "Approve & execute"}
@@ -71,7 +71,7 @@ export function RunRecoveryButton({ paymentId, label = "Run AI recovery" }: { pa
       <button
         onClick={() => run()}
         disabled={pending}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-[12px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-navy-soft active:scale-[0.98] disabled:opacity-50"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-[12px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
       >
         {pending ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
         {pending ? "Running…" : label}

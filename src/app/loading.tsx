@@ -4,9 +4,9 @@ export default function Loading() {
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="rounded-xl border border-line bg-surface p-4">
-            <div className="h-3 w-20 rounded bg-[#e8ebf0]" />
-            <div className="mt-3 h-7 w-24 rounded bg-[#e8ebf0]" />
-            <div className="mt-2 h-2.5 w-28 rounded bg-[#eef0f4]" />
+            <div className="h-3 w-20 rounded bg-track" />
+            <div className="mt-3 h-7 w-24 rounded bg-track" />
+            <div className="mt-2 h-2.5 w-28 rounded bg-track" />
           </div>
         ))}
       </div>

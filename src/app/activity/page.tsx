@@ -44,7 +44,7 @@ export default async function ActivityPage({
                 href={l === "all" ? "/activity" : `/activity?level=${l}`}
                 aria-current={activeLevel === l ? "true" : undefined}
                 className={`rounded-md px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
-                  activeLevel === l ? "bg-ink text-white" : "text-ink-soft hover:bg-surface-sunken"
+                  activeLevel === l ? "bg-primary text-white" : "text-ink-soft hover:bg-surface-sunken"
                 }`}
               >
                 {l}

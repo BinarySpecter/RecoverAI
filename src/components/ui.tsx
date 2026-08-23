@@ -231,7 +231,7 @@ export function ConfidenceMeter({
         <span className={`tnum text-[13px] font-semibold ${text}`}>{value.toFixed(2)}</span>
       </div>
       <div
-        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#eef0f4]"
+        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-track"
         role="meter"
         aria-valuenow={pct}
         aria-valuemin={0}

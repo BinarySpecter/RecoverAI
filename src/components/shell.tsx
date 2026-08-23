@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import { LayoutDashboard, Target, ScrollText, ShieldCheck } from "lucide-react"
 import { SimulateButton } from "@/components/simulate-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const NAV = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
@@ -72,7 +73,7 @@ export function Shell({
           </ul>
         </nav>
 
-        <div className="px-6 py-5">
+        <div className="space-y-3 px-6 py-5">
           <div className="rounded-lg border border-navy-line/70 bg-white/[0.03] px-3.5 py-3">
             <p className="text-[10.5px] font-medium leading-relaxed text-navy-text">
               LLM recommends.
@@ -80,6 +81,7 @@ export function Shell({
               <span className="text-white">Application rules authorize.</span>
             </p>
           </div>
+          <ThemeToggle />
         </div>
       </aside>
 
@@ -96,6 +98,9 @@ export function Shell({
                 <span className="h-1.5 w-1.5 rounded-full bg-good animate-pulse-soft" aria-hidden />
                 TechNova Commerce · demo
               </div>
+              <div className="md:hidden">
+                <ThemeToggle variant="compact" />
+              </div>
               <SimulateButton />
             </div>
           </div>
@@ -106,7 +111,7 @@ export function Shell({
                 key={item.href}
                 href={item.href}
                 className={`rounded-md px-2.5 py-1 text-[12px] font-medium whitespace-nowrap ${
-                  active === item.href ? "bg-navy text-white" : "text-ink-soft"
+                  active === item.href ? "bg-primary text-white" : "text-ink-soft"
                 }`}
               >
                 {item.label}

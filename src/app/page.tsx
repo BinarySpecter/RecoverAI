@@ -92,7 +92,7 @@ export default async function OverviewPage() {
               </span>
             </dd>
             <div
-              className="mt-2.5 h-[3px] w-24 overflow-hidden rounded-full bg-[#e8ebf1]"
+              className="mt-2.5 h-[3px] w-24 overflow-hidden rounded-full bg-track"
               role="meter"
               aria-valuenow={Math.round(rate30 * 100)}
               aria-valuemin={0}

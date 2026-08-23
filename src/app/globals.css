@@ -1,48 +1,146 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (tokens flip via CSS variables; see :root / .dark) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Theme tokens — utilities reference vars so .dark flips every surface */ 
+/* ------------------------------------------------------------------ */
 @theme inline {
   /* Canvas + surfaces */
-  --color-background: #f4f5f8;
-  --color-foreground: #101a30;
-  --color-ink: #0b1030;
-  --color-ink-soft: #46536e;
-  --color-ink-faint: #7d879c;
-  --color-surface: #ffffff;
-  --color-surface-sunken: #f7f8fa;
-  --color-line: #e4e7ee;
-  --color-line-strong: #cdd3df;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
 
-  /* Command sidebar */
-  --color-navy: #0b1030;
-  --color-navy-soft: #171e4a;
-  --color-navy-line: #232b5c;
-  --color-navy-text: #a8b1d6;
-  --color-navy-bright: #ffffff;
+  /* Command sidebar (same identity in both themes) */
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-navy-line: var(--navy-line);
+  --color-navy-text: var(--navy-text);
+  --color-navy-bright: var(--navy-bright);
 
   /* Semantic */
-  --color-brand: #2b6bf3;
-  --color-brand-deep: #0b50cf;
-  --color-brand-soft: #e9f0fe;
-  --color-risk: #d61f4b;
-  --color-risk-soft: #fdecef;
-  --color-good: #0e8052;
-  --color-good-soft: #e7f4ee;
-  --color-warn: #b56200;
-  --color-warn-soft: #fdf2e2;
-  --color-violet: #6d4fe0;
-  --color-violet-soft: #efecfb;
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-risk: var(--risk);
+  --color-risk-soft: var(--risk-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+
+  /* Interaction primitives */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-track: var(--track);
+  --color-backdrop: var(--backdrop);
+  --color-rule: var(--rule);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* ---------------- Light (approved theme — values unchanged) ---------------- */
+:root {
+  --background: #f4f5f8;
+  --foreground: #101a30;
+  --ink: #0b1030;
+  --ink-soft: #46536e;
+  --ink-faint: #7d879c;
+  --surface: #ffffff;
+  --surface-sunken: #f7f8fa;
+  --line: #e4e7ee;
+  --line-strong: #cdd3df;
+
+  --navy: #0b1030;
+  --navy-soft: #171e4a;
+  --navy-line: #232b5c;
+  --navy-text: #a8b1d6;
+  --navy-bright: #ffffff;
+
+  --brand: #2b6bf3;
+  --brand-deep: #0b50cf;
+  --brand-soft: #e9f0fe;
+  --risk: #d61f4b;
+  --risk-soft: #fdecef;
+  --good: #0e8052;
+  --good-soft: #e7f4ee;
+  --warn: #b56200;
+  --warn-soft: #fdf2e2;
+  --violet: #6d4fe0;
+  --violet-soft: #efecfb;
+
+  --primary: #0b1030;
+  --primary-hover: #171e4a;
+  --track: #eef0f4;
+  --backdrop: rgba(11, 16, 48, 0.45);
+  --rule: rgba(11, 16, 48, 0.8);
+
+  --scrollbar: #c4cbda;
+  --selection: #cfe1fd;
+}
+
+/* ---------------- Dark — a designed night palette, not an inversion ---------------- */
+.dark {
+  --background: #0a0d18;
+  --foreground: #e9edfb;
+  --ink: #eef1fb;
+  --ink-soft: #a7b0cf;
+  --ink-faint: #8b94b3;
+  --surface: #12172b;
+  --surface-sunken: #171d34;
+  --line: #242b47;
+  --line-strong: #363f63;
+
+  /* Sidebar keeps its identity, one step above the canvas */
+  --navy: #0e1330;
+  --navy-soft: #1b2350;
+  --navy-line: #262f5f;
+  --navy-text: #a8b1d6;
+  --navy-bright: #ffffff;
+
+  /* Semantic accents lift for contrast on dark; meaning unchanged */
+  --brand: #5b8df7;
+  --brand-deep: #7ba6f9;
+  --brand-soft: #1a2445;
+  --risk: #f4587f;
+  --risk-soft: #351529;
+  --good: #37c38f;
+  --good-soft: #0f2b22;
+  --warn: #e5a03c;
+  --warn-soft: #322510;
+  --violet: #a08bf0;
+  --violet-soft: #241f45;
+
+  --primary: #252f5e;
+  --primary-hover: #303c74;
+  --track: #232a45;
+  --backdrop: rgba(3, 5, 14, 0.68);
+  --rule: #46517f;
+
+  --scrollbar: #2c3355;
+  --selection: #2a3a63;
+}
+
 html {
   color-scheme: light;
 }
+html.dark {
+  color-scheme: dark;
+}
 
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -50,7 +148,7 @@ body {
 }
 
 ::selection {
-  background: #cfe1fd;
+  background: var(--selection);
 }
 
 /* Money and metrics align in columns and don't reflow as values change */
@@ -76,11 +174,11 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c4cbda transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
 }
