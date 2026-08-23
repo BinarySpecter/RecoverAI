@@ -1,6 +1,10 @@
 # RecoverAI
 
-**Turn failed payments into recovered revenue — without letting an AI touch money on its own.**
+> ### Turn failed payments into recovered revenue — without letting an AI touch money on its own.
+
+> **AI recommends. Application rules authorize.**
+
+That one line is the product's core design decision, and every screen in the app is built around it.
 
 ## The problem
 
@@ -18,13 +22,6 @@ RecoverAI splits the problem in two:
   from a bounded catalog.
 - **Application rules do the authorizing.** A deterministic policy engine — not the LLM — decides
   whether that recommendation is allowed to execute.
-
-```
-AI recommends.
-Application rules authorize.
-```
-
-That single line is the product's core design decision, and every screen in the app is built around it:
 
 ```
 PAYMENT FAILURE → AI DIAGNOSIS → POLICY VALIDATION → RECOVERY ACTION → OUTCOME → AUDIT TRAIL → ANALYTICS
