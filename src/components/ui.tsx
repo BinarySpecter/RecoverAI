@@ -97,6 +97,25 @@ export function humanize(value: string): string {
 
 /** ---------- Actor attribution — who/what caused an audit event ---------- */
 
+/**
+ * Customer-facing provider naming. Implementation detail (mock/deterministic-rules-v1)
+ * stays in the audit trail; surfaces get product language. Honest: "offline-safe"
+ * states exactly what the deterministic engine guarantees.
+ */
+export function providerLabel(provider: string, usedFallback: boolean): string {
+  if (usedFallback || provider === "fallback") return "deterministic fallback · offline-safe"
+  switch (provider) {
+    case "mock":
+      return "offline-safe engine"
+    case "gemini":
+      return "Gemini"
+    case "deepseek":
+      return "DeepSeek"
+    default:
+      return provider
+  }
+}
+
 const ACTOR_STYLES: Record<string, string> = {
   GATEWAY: "bg-surface-sunken text-ink-soft border-line-strong",
   POLICY: "bg-brand-soft text-brand-deep border-brand/20",

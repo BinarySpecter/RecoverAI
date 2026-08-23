@@ -10,20 +10,25 @@ import {
   Brain,
   Scale,
   CheckCircle2,
+  ShieldCheck,
 } from "lucide-react"
 import { Shell } from "@/components/shell"
 import { Card, CardHeader, Badge, Money, EmptyState, timestamp, Eyebrow } from "@/components/ui"
 import { TrendChart, CategoryBars } from "@/components/charts"
 import { ApproveRejectButtons } from "@/components/action-buttons"
-import { getDashboardMetrics } from "@/lib/analytics"
+import { getDashboardMetrics, getScopedMetrics } from "@/lib/analytics"
 import { getMerchant, db } from "@/lib/db"
 import { formatINR } from "@/lib/types"
+import { ACTION_CATALOG, MAX_ACTIONS_PER_PAYMENT } from "@/lib/engine/actions"
+import { CUSTOMER_CONTACT_RISK_CEILING } from "@/lib/engine/policy-engine"
 
 export const dynamic = "force-dynamic"
 
 export default async function OverviewPage() {
   const merchant = await getMerchant()
   const metrics = await getDashboardMetrics(merchant.id)
+  const scoped = await getScopedMetrics(merchant.id)
+  const { recovered30Amount, recovered30Count, failed30, failed7, stoppedByPolicy } = scoped
 
   const [approvals, recentLogs] = await Promise.all([
     db.recoveryAction.findMany({
@@ -33,11 +38,29 @@ export default async function OverviewPage() {
     }),
     db.auditLog.findMany({ where: { merchantId: merchant.id }, orderBy: { createdAt: "desc" }, take: 10 }),
   ])
-
-  const totalFailures = metrics.recoveredPayments + metrics.failedPayments
+  const rate30 = failed30 > 0 ? recovered30Count / failed30 : 0
+  const cooldowns = Object.values(ACTION_CATALOG).map((a) => a.cooldownHours)
+  const minCooldown = Math.min(...cooldowns)
+  const maxCooldown = Math.max(...cooldowns)
 
   return (
     <Shell active="/" title="Overview" subtitle="AI Revenue Recovery Command Center">
+      {/* ---------- Product statement ---------- */}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 animate-fade-up">
+        <div>
+          <h2 className="text-[21px] font-bold leading-tight tracking-[-0.02em] text-ink">
+            Revenue recovery, with AI inside the guardrails.
+          </h2>
+          <p className="mt-1 text-[13px] leading-snug text-ink-soft">
+            AI diagnoses every failure. Application policy decides what runs. Every rupee is audited.
+          </p>
+        </div>
+        <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-ink-faint">
+          <ShieldCheck size={13} className="text-good" aria-hidden />
+          LLM recommends · rules authorize
+        </p>
+      </div>
+
       {/* ---------- Action banner ---------- */}
       {metrics.pendingApprovals > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-warn/35 bg-warn-soft/70 px-4 py-3 animate-fade-up" role="alert">
@@ -58,10 +81,9 @@ export default async function OverviewPage() {
         </div>
       )}
 
-      {/* ---------- KPI row ---------- */}
+      {/* ---------- KPI row (every metric scoped) ---------- */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
-        {/* Primary: revenue at risk */}
-        <Card className="relative col-span-2 overflow-hidden p-[18px] animate-fade-up md:col-span-1 xl:col-span-1">
+        <Card className="relative col-span-2 overflow-hidden p-[18px] animate-fade-up md:col-span-1">
           <span className="absolute inset-x-0 top-0 h-[3px] bg-risk/80" aria-hidden />
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Revenue at risk</Eyebrow>
@@ -73,12 +95,11 @@ export default async function OverviewPage() {
             {formatINR(metrics.revenueAtRisk, { compact: true })}
           </p>
           <p className="mt-2 text-[11.5px] leading-snug text-ink-faint">
-            {metrics.openOpportunities} open {metrics.openOpportunities === 1 ? "opportunity" : "opportunities"}
+            Currently open · {metrics.openOpportunities} {metrics.openOpportunities === 1 ? "opportunity" : "opportunities"}
           </p>
         </Card>
 
-        {/* Primary: recovered */}
-        <Card className="relative col-span-2 overflow-hidden p-[18px] animate-fade-up md:col-span-1 xl:col-span-1">
+        <Card className="relative col-span-2 overflow-hidden p-[18px] animate-fade-up md:col-span-1">
           <span className="absolute inset-x-0 top-0 h-[3px] bg-good/80" aria-hidden />
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Revenue recovered</Eyebrow>
@@ -86,15 +107,14 @@ export default async function OverviewPage() {
               <TrendingUp size={13} className="text-good" strokeWidth={2.3} aria-hidden />
             </span>
           </div>
-          <p className="tnum mt-3 text-[27px] font-bold leading-none tracking-[-0.02em] text-good" title={formatINR(metrics.revenueRecovered)}>
-            {formatINR(metrics.revenueRecovered, { compact: true })}
+          <p className="tnum mt-3 text-[27px] font-bold leading-none tracking-[-0.02em] text-good" title={formatINR(recovered30Amount)}>
+            {formatINR(recovered30Amount, { compact: true })}
           </p>
           <p className="mt-2 text-[11.5px] leading-snug text-ink-faint">
-            {metrics.recoveredPayments} {metrics.recoveredPayments === 1 ? "payment" : "payments"} saved by RecoverAI
+            Last 30 days · {recovered30Count} {recovered30Count === 1 ? "payment" : "payments"} saved
           </p>
         </Card>
 
-        {/* Recovery performance with gauge */}
         <Card className="col-span-2 p-[18px] animate-fade-up md:col-span-1">
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Recovery rate</Eyebrow>
@@ -103,25 +123,23 @@ export default async function OverviewPage() {
             </span>
           </div>
           <p className="tnum mt-3 text-[27px] font-bold leading-none tracking-[-0.02em] text-ink">
-            {(metrics.recoveryRate * 100).toFixed(0)}%
+            {(rate30 * 100).toFixed(0)}%
           </p>
           <div
             className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[#eef0f4]"
             role="meter"
-            aria-valuenow={Math.round(metrics.recoveryRate * 100)}
+            aria-valuenow={Math.round(rate30 * 100)}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="Recovery rate"
+            aria-label="Recovery rate, last 30 days"
           >
-            <div className="h-full rounded-full bg-good/85" style={{ width: `${metrics.recoveryRate * 100}%` }} />
+            <div className="h-full rounded-full bg-good/85" style={{ width: `${rate30 * 100}%` }} />
           </div>
           <p className="tnum mt-2 text-[11.5px] leading-snug text-ink-faint">
-            {metrics.recoveredPayments}/{totalFailures} failures recovered
-            {metrics.avgConfidence !== null && <> · avg AI confidence {metrics.avgConfidence.toFixed(2)}</>}
+            Last 30 days · {recovered30Count}/{failed30} failures recovered
           </p>
         </Card>
 
-        {/* Approvals — action-required accent */}
         <Card className="col-span-1 p-[18px] animate-fade-up">
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Pending approvals</Eyebrow>
@@ -134,14 +152,13 @@ export default async function OverviewPage() {
           </p>
           {metrics.pendingApprovals > 0 ? (
             <a href="#approvals" className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-warn hover:underline">
-              Review now <ArrowRight size={11} strokeWidth={2.4} aria-hidden />
+              Awaiting your decision <ArrowRight size={11} strokeWidth={2.4} aria-hidden />
             </a>
           ) : (
             <p className="mt-2 text-[11.5px] text-ink-faint">nothing waiting</p>
           )}
         </Card>
 
-        {/* Secondary: failures */}
         <Card className="col-span-1 p-[18px] animate-fade-up">
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Failed payments</Eyebrow>
@@ -149,22 +166,55 @@ export default async function OverviewPage() {
               <CreditCard size={13} className="text-ink-soft" strokeWidth={2.3} aria-hidden />
             </span>
           </div>
-          <p className="tnum mt-3 text-[27px] font-bold leading-none tracking-[-0.02em] text-ink">{metrics.failedPayments}</p>
-          <p className="mt-2 text-[11.5px] text-ink-faint">{metrics.byCategory.length} failure {metrics.byCategory.length === 1 ? "type" : "types"}</p>
+          <p className="tnum mt-3 text-[27px] font-bold leading-none tracking-[-0.02em] text-ink">{failed7}</p>
+          <p className="mt-2 text-[11.5px] text-ink-faint">
+            Last 7 days · {metrics.byCategory.length} failure {metrics.byCategory.length === 1 ? "type" : "types"}
+          </p>
         </Card>
       </div>
+
+      {/* ---------- Guardrails in force ---------- */}
+      <Card className="mt-4">
+        <CardHeader
+          eyebrow="Policy guardrails in force"
+          title="The AI cannot improvise with money"
+          subtitle="Every recommendation passes these deterministic limits before anything executes"
+          action={<ShieldCheck size={16} className="text-brand-deep" aria-hidden />}
+        />
+        <dl className="grid grid-cols-2 gap-px border-y border-line/70 bg-line/50 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            { label: "Max recovery actions", value: `${MAX_ACTIONS_PER_PAYMENT} / payment` },
+            { label: "Auto-retry needs approval at", value: formatINR(ACTION_CATALOG.RETRY_PAYMENT.approvalThreshold) },
+            { label: "Customer messaging at", value: formatINR(ACTION_CATALOG.SEND_PAYMENT_LINK.approvalThreshold) },
+            { label: "Action cooldowns", value: `${minCooldown}–${maxCooldown}h` },
+            { label: "Customer-contact risk ceiling", value: CUSTOMER_CONTACT_RISK_CEILING.toFixed(2) },
+          ].map((g) => (
+            <div key={g.label} className="bg-surface px-4 py-3">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-faint">{g.label}</dt>
+              <dd className="tnum mt-1 text-[16px] font-bold tracking-[-0.01em] text-ink">{g.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="px-5 py-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+          <span className="tnum font-semibold text-ink">{stoppedByPolicy}</span>{" "}
+          {stoppedByPolicy === 1 ? "action has been" : "actions have been"} stopped by policy on this account ·{" "}
+          <span className="tnum font-semibold text-ink">{metrics.pendingApprovals}</span>{" "}
+          {metrics.pendingApprovals === 1 ? "is" : "are"} waiting for human sign-off · every action is policy-checked
+          before execution.
+        </p>
+      </Card>
 
       {/* ---------- Charts ---------- */}
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader
             title="Failures vs recoveries"
-            subtitle="Last 7 days"
+            subtitle="Payment counts · last 7 days"
           />
           <TrendChart data={metrics.trend} />
         </Card>
         <Card className="lg:col-span-2">
-          <CardHeader title="Where revenue is lost" subtitle="Failure categories by amount" />
+          <CardHeader title="Where revenue is lost" subtitle="Failure categories by amount · all open + recovered" />
           {metrics.byCategory.length === 0 ? (
             <EmptyState title="No failures recorded" hint="Simulate a failed payment to see the engine work." />
           ) : (
@@ -192,7 +242,6 @@ export default async function OverviewPage() {
             <ul className="divide-y divide-line/70">
               {approvals.map((a) => (
                 <li key={a.id} className="px-5 py-4">
-                  {/* headline: money first */}
                   <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                     <Money paise={a.payment.amount} className="text-[20px] font-bold tracking-[-0.02em] text-ink" />
                     <Link
@@ -207,7 +256,6 @@ export default async function OverviewPage() {
                     )}
                   </div>
 
-                  {/* the governed flow: AI → policy → you */}
                   <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11.5px]">
                     <span className="inline-flex items-center gap-1.5 rounded-md border border-violet/25 bg-violet-soft px-2 py-1 font-medium text-violet">
                       <Brain size={11} strokeWidth={2.4} aria-hidden />
@@ -238,7 +286,7 @@ export default async function OverviewPage() {
         <Card className="lg:col-span-2">
           <CardHeader
             title="Recovery activity"
-            subtitle="Every decision, traced"
+            subtitle="Every decision, attributed"
             action={
               <Link href="/activity" className="inline-flex items-center gap-1 text-[12px] font-medium text-brand-deep hover:underline">
                 Full audit <ArrowRight size={12} aria-hidden />
@@ -270,7 +318,7 @@ export default async function OverviewPage() {
                         log.message
                       )}
                     </p>
-                    <p className="tnum mt-0.5 font-mono text-[10px] text-ink-faint">{timestamp(log.createdAt)}</p>
+                    <p className="tnum mt-0.5 font-mono text-[11px] text-ink-faint">{timestamp(log.createdAt)}</p>
                   </div>
                 </li>
               ))}
@@ -281,7 +329,7 @@ export default async function OverviewPage() {
 
       {/* ---------- At-risk customers ---------- */}
       <Card className="mt-4">
-        <CardHeader eyebrow="Exposure" title="High-value customers needing attention" subtitle="Open failure amount by customer" />
+        <CardHeader eyebrow="Exposure" title="High-value customers needing attention" subtitle="Open failure amount by customer · currently open" />
         {metrics.topAtRiskCustomers.length === 0 ? (
           <EmptyState title="No customers at risk" hint="Every failed payment has been recovered or closed." />
         ) : (

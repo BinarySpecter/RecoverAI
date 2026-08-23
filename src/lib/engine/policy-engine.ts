@@ -9,6 +9,9 @@ import type { ActionType, FailureCategory, PolicyDecision, RiskLevel } from "@/l
  * and cannot be talked around by LLM output.
  */
 
+/** Customer-contact is blocked outright at/above this risk score (fraud guard). */
+export const CUSTOMER_CONTACT_RISK_CEILING = 0.8
+
 export interface PolicyRequest {
   actionType: ActionType
   failureCategory: FailureCategory
@@ -49,9 +52,9 @@ export function evaluatePolicy(req: PolicyRequest): PolicyVerdict {
   }
 
   // 2. Fraud guard: nothing customer-facing when risk score is severe.
-  if (def.customerFacing && req.customerRiskScore >= 0.8) {
+  if (def.customerFacing && req.customerRiskScore >= CUSTOMER_CONTACT_RISK_CEILING) {
     return reject(
-      `Customer risk score ${req.customerRiskScore.toFixed(2)} exceeds the 0.80 customer-contact ceiling — escalation required instead.`,
+      `Customer risk score ${req.customerRiskScore.toFixed(2)} exceeds the 0.8 customer-contact ceiling — escalation required instead.`,
       "HIGH",
     )
   }

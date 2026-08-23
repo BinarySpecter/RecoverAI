@@ -124,3 +124,32 @@ export async function getDashboardMetrics(merchantId: string): Promise<Dashboard
     recentActivityCount: await db.auditLog.count({ where: { merchantId } }),
   }
 }
+
+/** Time-scoped KPI inputs — every dashboard metric states its window. */
+export async function getScopedMetrics(merchantId: string) {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000)
+
+  const [recovered30, failed30, failed7, stoppedByPolicy] = await Promise.all([
+    db.payment.aggregate({
+      where: { merchantId, status: "RECOVERED", recoveredAt: { gte: thirtyDaysAgo } },
+      _sum: { amount: true },
+      _count: true,
+    }),
+    db.payment.count({
+      where: { merchantId, createdAt: { gte: thirtyDaysAgo }, status: { in: ["FAILED", "RECOVERED"] } },
+    }),
+    db.payment.count({
+      where: { merchantId, createdAt: { gte: sevenDaysAgo }, status: "FAILED" },
+    }),
+    db.recoveryAction.count({ where: { payment: { merchantId }, policyDecision: "REJECTED" } }),
+  ])
+
+  return {
+    recovered30Amount: recovered30._sum.amount ?? 0,
+    recovered30Count: recovered30._count,
+    failed30,
+    failed7,
+    stoppedByPolicy,
+  }
+}

@@ -58,8 +58,8 @@ export function AuditTimeline({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <ActorChip actor={log.actor} />
-                <span className="tnum font-mono text-[10.5px] text-ink-faint">{timestamp(log.createdAt)}</span>
-                <span className="font-mono text-[10px] text-ink-faint/80">{log.event}</span>
+                <span className="tnum font-mono text-[11px] text-ink-faint">{timestamp(log.createdAt)}</span>
+                <span className="font-mono text-[10.5px] text-ink-faint/80">{log.event}</span>
               </div>
               <p className={`mt-1 text-[12.5px] leading-snug text-ink-soft ${dense ? "line-clamp-2" : ""}`}>
                 {renderMessage ? renderMessage(log) : log.message}

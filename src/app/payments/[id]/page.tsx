@@ -12,7 +12,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { Card, CardHeader, Badge, ConfidenceMeter, KeyValue, EmptyState, timestamp, humanize, Eyebrow } from "@/components/ui"
+import { Card, CardHeader, Badge, ConfidenceMeter, KeyValue, EmptyState, timestamp, humanize, Eyebrow, providerLabel } from "@/components/ui"
 import { AuditTimeline, PipelineStageStrip } from "@/components/audit-timeline"
 import { ApproveRejectButtons, RunRecoveryButton, ReanalyzeButton } from "@/components/action-buttons"
 import { ACTION_CATALOG } from "@/lib/engine/actions"
@@ -71,6 +71,11 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
               {formatINR(payment.amount)}
             </span>
             <Badge value={payment.status} />
+            {latestAnalysis && (
+              <span className="rounded-full border border-violet/25 bg-violet-soft px-2 py-0.5 text-[11px] font-medium text-violet">
+                AI: {humanize(latestAnalysis.recommendedAction)}
+              </span>
+            )}
             {payment.failure && <Badge value={payment.failure.category} />}
             {latestAnalysis && <Badge value={latestAnalysis.severity} />}
           </div>
@@ -94,7 +99,7 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
               title="AI diagnosis"
               subtitle={
                 latestAnalysis
-                  ? `${latestAnalysis.provider}${latestAnalysis.usedFallback ? " → deterministic fallback" : ""} · ${latestAnalysis.model ?? ""} · ${latestAnalysis.latencyMs ?? "?"}ms`
+                  ? `AI diagnosis · ${providerLabel(latestAnalysis.provider, latestAnalysis.usedFallback)}`
                   : "Not analyzed yet"
               }
               action={

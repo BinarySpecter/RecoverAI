@@ -1,6 +1,6 @@
 import { Brain, Scale, Lock, FileSearch, Webhook, ArrowDown, ShieldCheck, User } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { Card, CardHeader, Badge, Eyebrow } from "@/components/ui"
+import { Card, CardHeader, Badge, Eyebrow, providerLabel } from "@/components/ui"
 import { ACTION_CATALOG } from "@/lib/engine/actions"
 import { resolveProvider } from "@/lib/ai"
 import { formatINR } from "@/lib/types"
@@ -115,16 +115,22 @@ export default async function SafetyPage() {
           <CardHeader title="Active AI provider" subtitle="Server-side configured" action={<FileSearch size={16} className="text-ink-faint" aria-hidden />} />
           <div className="space-y-2 px-5 pb-5 text-[13px]">
             <div className="flex items-center justify-between border-b border-line/60 pb-2">
-              <span className="text-ink-faint">Requested</span>
-              <span className="tnum font-mono font-medium">{requested}</span>
+              <span className="text-ink-faint">Active</span>
+              <span className="font-medium text-ink">{providerLabel(provider.name, false)}</span>
             </div>
             <div className="flex items-center justify-between border-b border-line/60 pb-2">
-              <span className="text-ink-faint">Active</span>
-              <span className="tnum font-mono font-medium">{provider.name} · {provider.model}</span>
+              <span className="text-ink-faint">Engine</span>
+              <span className="tnum font-mono text-[12px] text-ink-soft">{provider.name} · {provider.model}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-ink-faint">API key</span>
-              {configured ? <Badge value="APPROVED">Configured</Badge> : <Badge value="PENDING">Not set</Badge>}
+              <span className="text-ink-faint">Network required</span>
+              {provider.name === "mock" ? (
+                <Badge value="APPROVED">No — offline-safe</Badge>
+              ) : configured ? (
+                <Badge value="APPROVED">Configured</Badge>
+              ) : (
+                <Badge value="PENDING">Key not set</Badge>
+              )}
             </div>
             {!configured && requested !== "mock" && (
               <p className="mt-2 rounded-lg bg-warn-soft px-3 py-2 text-[12px] leading-relaxed text-ink-soft">
@@ -132,6 +138,10 @@ export default async function SafetyPage() {
                 answering instead. The full workflow remains available offline.
               </p>
             )}
+            <p className="mt-1 text-[11.5px] leading-relaxed text-ink-faint">
+              The full demo runs on the offline-safe engine: same schema, same policy gates, same audit trail — no
+              network dependency. Swap providers with one environment variable.
+            </p>
           </div>
         </Card>
 
