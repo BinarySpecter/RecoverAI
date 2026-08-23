@@ -5,59 +5,84 @@ import { formatINR } from "@/lib/types"
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgba(2,4,43,0.05)] ${className}`}>
+    <section className={`rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgba(2,4,43,0.05)] ${className}`}>
       {children}
-    </div>
+    </section>
   )
 }
 
-export function CardHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function CardHeader({
+  title,
+  subtitle,
+  action,
+  eyebrow,
+}: {
+  title: string
+  subtitle?: string
+  action?: ReactNode
+  eyebrow?: string
+}) {
   return (
     <div className="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
-      <div>
-        <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-[12.5px] text-ink-faint">{subtitle}</p>}
+      <div className="min-w-0">
+        {eyebrow && (
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint">{eyebrow}</p>
+        )}
+        <h2 className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-[12px] leading-snug text-ink-faint">{subtitle}</p>}
       </div>
       {action}
     </div>
   )
 }
 
-/** ---------- Status badges ---------- */
-
-const BADGE_STYLES: Record<string, string> = {
-  // payment status
-  CAPTURED: "bg-good-soft text-good",
-  RECOVERED: "bg-good-soft text-good",
-  FAILED: "bg-risk-soft text-risk",
-  PENDING: "bg-warn-soft text-warn",
-  // action status
-  AWAITING_APPROVAL: "bg-violet-soft text-violet",
-  EXECUTED: "bg-brand-soft text-brand-deep",
-  EXECUTING: "bg-brand-soft text-brand-deep",
-  REJECTED: "bg-[#f1f2f5] text-ink-soft",
-  SKIPPED: "bg-[#f1f2f5] text-ink-soft",
-  // policy decisions
-  APPROVED: "bg-good-soft text-good",
-  NEEDS_APPROVAL: "bg-violet-soft text-violet",
-  // severity
-  low: "bg-[#f1f2f5] text-ink-soft",
-  medium: "bg-warn-soft text-warn",
-  high: "bg-risk-soft text-risk",
-  critical: "bg-risk text-white",
-  // risk levels
-  LOW: "bg-[#f1f2f5] text-ink-soft",
-  MEDIUM: "bg-warn-soft text-warn",
-  HIGH: "bg-risk-soft text-risk",
+/** Micro-label for section eyebrows and table headers. */
+export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint ${className}`}>
+      {children}
+    </span>
+  )
 }
 
-export function Badge({ value, className = "" }: { value: string; className?: string }) {
-  const style = BADGE_STYLES[value] ?? "bg-[#f1f2f5] text-ink-soft"
+/** ---------- Status badges — always carry a shape (dot), never color alone ---------- */
+
+const BADGE_STYLES: Record<string, { cls: string; dot: string }> = {
+  // payment status
+  CAPTURED: { cls: "bg-good-soft text-good", dot: "bg-good" },
+  RECOVERED: { cls: "bg-good-soft text-good", dot: "bg-good" },
+  FAILED: { cls: "bg-risk-soft text-risk", dot: "bg-risk" },
+  PENDING: { cls: "bg-warn-soft text-warn", dot: "bg-warn" },
+  // action status
+  AWAITING_APPROVAL: { cls: "bg-warn-soft text-warn", dot: "bg-warn" },
+  EXECUTED: { cls: "bg-brand-soft text-brand-deep", dot: "bg-brand" },
+  EXECUTING: { cls: "bg-brand-soft text-brand-deep", dot: "bg-brand" },
+  REJECTED: { cls: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
+  SKIPPED: { cls: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
+  // policy decisions
+  APPROVED: { cls: "bg-good-soft text-good", dot: "bg-good" },
+  NEEDS_APPROVAL: { cls: "bg-warn-soft text-warn", dot: "bg-warn" },
+  // severity
+  low: { cls: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
+  medium: { cls: "bg-warn-soft text-warn", dot: "bg-warn" },
+  high: { cls: "bg-risk-soft text-risk", dot: "bg-risk" },
+  critical: { cls: "bg-risk text-white", dot: "bg-white" },
+  // risk levels
+  LOW: { cls: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" },
+  MEDIUM: { cls: "bg-warn-soft text-warn", dot: "bg-warn" },
+  HIGH: { cls: "bg-risk-soft text-risk", dot: "bg-risk" },
+  // misc
+  SUBSCRIPTION_ACTIVE: { cls: "bg-brand-soft text-brand-deep", dot: "bg-brand" },
+}
+
+export function Badge({ value, className = "", children }: { value: string; className?: string; children?: ReactNode }) {
+  const style = BADGE_STYLES[value] ?? { cls: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" }
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium tracking-wide whitespace-nowrap ${style} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium tracking-[0.01em] whitespace-nowrap ${style.cls} ${className}`}
     >
-      {humanize(value)}
+      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+      {children ?? humanize(value)}
     </span>
   )
 }
@@ -70,23 +95,63 @@ export function humanize(value: string): string {
     .join(" ")
 }
 
+/** ---------- Actor attribution — who/what caused an audit event ---------- */
+
+const ACTOR_STYLES: Record<string, string> = {
+  GATEWAY: "bg-surface-sunken text-ink-soft border-line-strong",
+  POLICY: "bg-brand-soft text-brand-deep border-brand/20",
+  MERCHANT: "bg-warn-soft text-warn border-warn/20",
+  SYSTEM: "bg-surface-sunken text-ink-soft border-line-strong",
+}
+
+export function actorStyle(actor: string): string {
+  if (actor.startsWith("AI:")) return "bg-violet-soft text-violet border-violet/20"
+  return ACTOR_STYLES[actor] ?? "bg-surface-sunken text-ink-soft border-line-strong"
+}
+
+export function ActorChip({ actor, className = "" }: { actor: string; className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded border px-1.5 py-px font-mono text-[10px] font-medium tracking-wide ${actorStyle(actor)} ${className}`}
+    >
+      {actor}
+    </span>
+  )
+}
+
 /** ---------- Metric display ---------- */
 
 export function Money({ paise, className = "" }: { paise: number; className?: string }) {
-  return <span className={className}>{formatINR(paise)}</span>
+  return <span className={`tnum ${className}`}>{formatINR(paise)}</span>
 }
 
-export function ConfidenceMeter({ value, label = "Confidence" }: { value: number; label?: string }) {
+export function ConfidenceMeter({
+  value,
+  label = "Confidence",
+  tone = "auto",
+}: {
+  value: number
+  label?: string
+  tone?: "auto" | "violet"
+}) {
   const pct = Math.round(value * 100)
-  const tone = pct >= 75 ? "bg-good" : pct >= 50 ? "bg-warn" : "bg-risk"
+  const bar = tone === "violet" ? "bg-violet" : pct >= 75 ? "bg-good" : pct >= 50 ? "bg-warn" : "bg-risk"
+  const text = tone === "violet" ? "text-violet" : pct >= 75 ? "text-good" : pct >= 50 ? "text-warn" : "text-risk"
   return (
-    <div className="min-w-[120px]">
+    <div className="min-w-[128px]">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] font-medium tracking-wide text-ink-faint uppercase">{label}</span>
-        <span className="font-mono text-[12.5px] font-semibold text-ink">{(value).toFixed(2)}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">{label}</span>
+        <span className={`tnum text-[13px] font-semibold ${text}`}>{value.toFixed(2)}</span>
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#eef0f4]">
-        <div className={`h-full rounded-full ${tone}`} style={{ width: `${pct}%` }} />
+      <div
+        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#eef0f4]"
+        role="meter"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${label} ${pct}%`}
+      >
+        <div className={`h-full rounded-full ${bar} transition-[width] duration-500`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   )
@@ -96,19 +161,19 @@ export function ConfidenceMeter({ value, label = "Confidence" }: { value: number
 
 export function EmptyState({ icon, title, hint }: { icon?: ReactNode; title: string; hint?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
       {icon && <div className="text-ink-faint/60">{icon}</div>}
-      <p className="text-[14px] font-medium text-ink-soft">{title}</p>
-      {hint && <p className="max-w-sm text-[12.5px] text-ink-faint">{hint}</p>}
+      <p className="text-[13.5px] font-medium text-ink-soft">{title}</p>
+      {hint && <p className="max-w-sm text-[12px] leading-relaxed text-ink-faint">{hint}</p>}
     </div>
   )
 }
 
 export function KeyValue({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-1.5">
-      <span className="text-[12.5px] text-ink-faint">{label}</span>
-      <span className="text-[13px] font-medium text-ink text-right">{children}</span>
+    <div className="flex items-baseline justify-between gap-4 py-[5px]">
+      <span className="text-[12px] text-ink-faint">{label}</span>
+      <span className="tnum text-[12.5px] font-medium text-ink text-right">{children}</span>
     </div>
   )
 }

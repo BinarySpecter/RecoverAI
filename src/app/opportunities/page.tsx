@@ -46,17 +46,17 @@ export default async function OpportunitiesPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[13px] min-w-[900px]">
+            <table className="w-full min-w-[900px] text-[13px]">
               <thead>
-                <tr className="border-y border-line/70 text-left text-[11px] uppercase tracking-wide text-ink-faint">
-                  <th className="px-5 py-2.5 font-medium">Customer</th>
-                  <th className="px-4 py-2.5 font-medium">Amount</th>
-                  <th className="px-4 py-2.5 font-medium">Failure</th>
-                  <th className="px-4 py-2.5 font-medium">AI diagnosis</th>
-                  <th className="px-4 py-2.5 font-medium">Recommended</th>
-                  <th className="px-4 py-2.5 font-medium">Confidence</th>
-                  <th className="px-4 py-2.5 font-medium">Status</th>
-                  <th className="px-4 py-2.5 font-medium text-right">Action</th>
+                <tr className="border-y border-line/70 text-left text-[10px] uppercase tracking-[0.12em] text-ink-faint">
+                  <th className="px-5 py-2.5 font-semibold">Customer</th>
+                  <th className="px-4 py-2.5 font-semibold">Amount</th>
+                  <th className="px-4 py-2.5 font-semibold">Failure</th>
+                  <th className="px-4 py-2.5 font-semibold">AI diagnosis</th>
+                  <th className="px-4 py-2.5 font-semibold">Recommended</th>
+                  <th className="px-4 py-2.5 font-semibold">Confidence</th>
+                  <th className="px-4 py-2.5 font-semibold">Status</th>
+                  <th className="px-4 py-2.5 font-semibold text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line/60">
@@ -64,7 +64,7 @@ export default async function OpportunitiesPage() {
                   const analysis = p.analyses[0]
                   const action = p.actions[0]
                   return (
-                    <tr key={p.id} className="hover:bg-[#f8f9fb] align-top">
+                    <tr key={p.id} className="align-top transition-colors hover:bg-surface-sunken">
                       <td className="px-5 py-3">
                         <Link href={`/payments/${p.id}`} className="font-medium text-ink hover:text-brand-deep">
                           {p.customer.name}
@@ -74,7 +74,7 @@ export default async function OpportunitiesPage() {
                           {p.customer.subscriptionActive && <span className="ml-1 text-violet">· sub</span>}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-semibold text-ink whitespace-nowrap">{formatINR(p.amount)}</td>
+                      <td className="tnum px-4 py-3 font-semibold whitespace-nowrap text-ink">{formatINR(p.amount)}</td>
                       <td className="px-4 py-3">
                         <Badge value={p.failure?.category ?? "UNKNOWN"} />
                         {p.retryCount > 0 && (
@@ -104,7 +104,7 @@ export default async function OpportunitiesPage() {
                       </td>
                       <td className="px-4 py-3">
                         {analysis ? (
-                          <span className={`font-mono text-[12.5px] font-semibold ${analysis.confidence >= 0.75 ? "text-good" : analysis.confidence >= 0.5 ? "text-warn" : "text-risk"}`}>
+                          <span className={`tnum font-mono text-[12.5px] font-semibold ${analysis.confidence >= 0.75 ? "text-good" : analysis.confidence >= 0.5 ? "text-warn" : "text-risk"}`}>
                             {analysis.confidence.toFixed(2)}
                           </span>
                         ) : (

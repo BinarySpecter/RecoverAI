@@ -39,8 +39,9 @@ export function Shell({
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${
-                  isActive ? "bg-brand-soft text-brand-deep" : "text-ink-soft hover:bg-[#f1f2f5] hover:text-ink"
+                  isActive ? "bg-brand-soft text-brand-deep" : "text-ink-soft hover:bg-surface-sunken hover:text-ink"
                 }`}
               >
                 <item.icon size={16} strokeWidth={2.1} />

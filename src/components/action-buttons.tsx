@@ -43,7 +43,7 @@ export function ApproveRejectButtons({ actionId }: { actionId: string }) {
         <button
           onClick={() => approve.run()}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-good px-3.5 py-1.5 text-[12.5px] font-semibold text-white hover:brightness-110 disabled:opacity-50 transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-good px-3.5 py-1.5 text-[12.5px] font-semibold text-white hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition-[filter,transform] duration-150 cursor-pointer"
         >
           {approve.pending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
           Approve &amp; execute
@@ -51,7 +51,7 @@ export function ApproveRejectButtons({ actionId }: { actionId: string }) {
         <button
           onClick={() => reject.run({ reason: "Rejected from dashboard" })}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-[12.5px] font-medium text-ink-soft hover:bg-[#f1f2f5] disabled:opacity-50 transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-[12.5px] font-medium text-ink-soft hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50 transition-[background-color,transform] duration-150 cursor-pointer"
         >
           {reject.pending ? <Loader2 size={13} className="animate-spin" /> : <X size={13} strokeWidth={3} />}
           Reject
@@ -71,7 +71,7 @@ export function RunRecoveryButton({ paymentId, label = "Run AI recovery" }: { pa
       <button
         onClick={() => run()}
         disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-[12.5px] font-semibold text-white hover:bg-brand-deep disabled:opacity-50 transition cursor-pointer"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-[12.5px] font-semibold text-white hover:bg-brand-deep active:scale-[0.98] disabled:opacity-50 transition-[background-color,transform] duration-150 cursor-pointer"
       >
         {pending ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
         {pending ? "Running pipeline…" : label}
@@ -88,7 +88,7 @@ export function ReanalyzeButton({ paymentId }: { paymentId: string }) {
       <button
         onClick={() => run()}
         disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-soft hover:bg-[#f1f2f5] disabled:opacity-50 transition cursor-pointer"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-soft hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50 transition-[background-color,transform] duration-150 cursor-pointer"
       >
         {pending ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
         Re-run AI diagnosis

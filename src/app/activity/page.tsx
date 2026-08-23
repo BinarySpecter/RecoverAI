@@ -1,7 +1,8 @@
 import Link from "next/link"
-import { ScrollText, CircleCheck, CircleX, MinusCircle } from "lucide-react"
+import { ScrollText } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { Card, CardHeader, EmptyState, timestamp } from "@/components/ui"
+import { Card, CardHeader, EmptyState, Eyebrow } from "@/components/ui"
+import { AuditTimeline, PipelineStageStrip } from "@/components/audit-timeline"
 import { db, getMerchant } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
@@ -34,57 +35,52 @@ export default async function ActivityPage({
     >
       <Card>
         <CardHeader
+          eyebrow="Immutable record"
           title="Audit log"
-          subtitle={`${logs.length} entries${activeLevel !== "all" ? ` · ${activeLevel} level` : ""}`}
+          subtitle={`${logs.length} ${logs.length === 1 ? "entry" : "entries"}${activeLevel !== "all" ? ` · ${activeLevel} level` : ""}`}
           action={
-            <div className="flex gap-1 rounded-lg border border-line p-0.5">
+            <nav className="flex gap-0.5 rounded-lg border border-line p-0.5" aria-label="Filter by level">
               {LEVELS.map((l) => (
                 <Link
                   key={l}
                   href={l === "all" ? "/activity" : `/activity?level=${l}`}
+                  aria-current={activeLevel === l ? "true" : undefined}
                   className={`rounded-md px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
-                    activeLevel === l ? "bg-ink text-white" : "text-ink-soft hover:bg-[#f1f2f5]"
+                    activeLevel === l ? "bg-ink text-white" : "text-ink-soft hover:bg-surface-sunken"
                   }`}
                 >
                   {l}
                 </Link>
               ))}
-            </div>
+            </nav>
           }
         />
+        <PipelineStageStrip />
         {logs.length === 0 ? (
-          <EmptyState icon={<ScrollText size={26} strokeWidth={1.6} />} title="No audit entries" />
+          <div className="border-t border-line/70">
+            <EmptyState icon={<ScrollText size={26} strokeWidth={1.6} />} title="No audit entries" />
+          </div>
         ) : (
-          <ol className="px-5 pb-5">
-            {logs.map((log, i) => (
-              <li key={log.id} className="relative flex gap-3.5 pb-4 last:pb-0">
-                {i < logs.length - 1 && <span className="absolute left-[7px] top-4 bottom-0 w-px bg-line" aria-hidden />}
-                <span className="relative z-10 mt-0.5 shrink-0">
-                  {log.level === "error" ? (
-                    <CircleX size={15} className="text-risk" />
-                  ) : log.level === "warn" ? (
-                    <MinusCircle size={15} className="text-warn" />
-                  ) : (
-                    <CircleCheck size={15} className="text-brand" />
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] leading-snug text-ink-soft">
-                    {log.paymentId ? (
-                      <Link href={`/payments/${log.paymentId}`} className="hover:text-brand-deep">
-                        {log.message}
-                      </Link>
-                    ) : (
-                      log.message
-                    )}
-                  </p>
-                  <p className="mt-0.5 font-mono text-[10.5px] text-ink-faint">
-                    {timestamp(log.createdAt)} · {log.actor} · {log.event}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="max-h-[calc(100vh-260px)] overflow-y-auto border-t border-line/70 pt-3">
+            <AuditTimeline
+              entries={logs}
+              dense
+              renderMessage={(log) =>
+                log.paymentId ? (
+                  <Link href={`/payments/${log.paymentId}`} className="hover:text-brand-deep">
+                    {log.message}
+                  </Link>
+                ) : (
+                  log.message
+                )
+              }
+            />
+          </div>
+        )}
+        {logs.length > 0 && (
+          <p className="border-t border-line/70 px-5 py-2.5">
+            <Eyebrow>WHAT happened · WHO caused it · WHEN · WHY — every entry attributable</Eyebrow>
+          </p>
         )}
       </Card>
     </Shell>

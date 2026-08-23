@@ -207,12 +207,12 @@ describe("recovery pipeline — end to end", () => {
       source: "SIMULATION",
     })
     const first = await runRecoveryPipeline(payment.id)
-    const second = await runRecoveryPipeline(payment.id) // must not throw
     if (first.status === "RECOVERED") {
       // Payment left the FAILED state — further runs are refused outright.
       await expect(runRecoveryPipeline(payment.id)).rejects.toThrow(/not FAILED|nothing to recover/i)
     } else {
       // Still FAILED: pipeline runs, but policy suppresses an immediate duplicate retry.
+      const second = await runRecoveryPipeline(payment.id)
       expect(second.policyDecision).toBe("REJECTED")
       expect(second.policyReason).toMatch(/cooldown|already executed/i)
     }

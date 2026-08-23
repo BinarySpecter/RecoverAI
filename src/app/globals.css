@@ -1,24 +1,26 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #f6f7f9;
+  --color-background: #f4f5f7;
   --color-foreground: #0b1b33;
   --color-ink: #02042b;
   --color-ink-soft: #46536e;
-  --color-ink-faint: #8a94a8;
+  --color-ink-faint: #7d879c;
   --color-surface: #ffffff;
-  --color-line: #e4e8ef;
-  --color-brand: #2b84f5;
-  --color-brand-deep: #0b57d0;
-  --color-brand-soft: #eaf2fe;
-  --color-risk: #e11d48;
-  --color-risk-soft: #ffe9ee;
-  --color-good: #0f9d58;
-  --color-good-soft: #e6f4ee;
-  --color-warn: #c77700;
-  --color-warn-soft: #fdf3e1;
-  --color-violet: #7c5cfc;
-  --color-violet-soft: #efecfe;
+  --color-surface-sunken: #f8f9fb;
+  --color-line: #e3e7ee;
+  --color-line-strong: #cfd6e0;
+  --color-brand: #2b6bf3;
+  --color-brand-deep: #0b50cf;
+  --color-brand-soft: #e9f0fe;
+  --color-risk: #d61f4b;
+  --color-risk-soft: #fdecef;
+  --color-good: #0e8052;
+  --color-good-soft: #e7f4ee;
+  --color-warn: #b56200;
+  --color-warn-soft: #fdf2e2;
+  --color-violet: #6d4fe0;
+  --color-violet-soft: #efecfb;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -32,22 +34,39 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
   background: #cfe1fd;
 }
 
-/* Thin scrollbars for tables/logs */
+/* Money and metrics align in columns and don't reflow as values change */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #c8cfdb transparent;
 }
 
+/* One consistent focus treatment across the app */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion — sparse, fast, transform/opacity only                       */
+/* ------------------------------------------------------------------ */
+
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
@@ -56,7 +75,33 @@ body {
 }
 
 .animate-fade-up {
-  animation: fade-up 0.35s ease-out both;
+  animation: fade-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Pipeline step reveal — used by the simulation result sequence */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-step-in {
+  animation: step-in 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-fast {
+  animation: spin 0.7s linear infinite;
 }
 
 @keyframes pulse-soft {
@@ -65,10 +110,36 @@ body {
     opacity: 1;
   }
   50% {
-    opacity: 0.45;
+    opacity: 0.4;
   }
 }
 
 .animate-pulse-soft {
   animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+/* Success flash for the recovered-amount banner */
+@keyframes settle-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-settle-in {
+  animation: settle-in 0.4s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
