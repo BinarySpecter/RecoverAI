@@ -85,7 +85,7 @@ export default async function OverviewPage() {
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-violet/30 bg-violet-soft/60 px-4 py-3 animate-fade-up">
           <ShieldAlert size={17} className="mt-0.5 shrink-0 text-violet" />
           <div className="text-[13px] leading-relaxed text-ink">
-            <span className="font-semibold">{metrics.pendingApprovals} recovery {metrics.pendingApprovals === 1 ? "action" : "actions"} need your approval.</span>{" "}
+            <span className="font-semibold">{metrics.pendingApprovals} recovery {metrics.pendingApprovals === 1 ? "action needs" : "actions need"} your approval.</span>{" "}
             <span className="text-ink-soft">The AI recommended them, the policy engine gated them — you authorize.</span>{" "}
             <Link href="#approvals" className="font-medium text-brand-deep underline underline-offset-2">Review →</Link>
           </div>

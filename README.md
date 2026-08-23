@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RecoverAI — AI Revenue Recovery Command Center
 
-## Getting Started
+**Razorpay AI Buildathon · AI Revenue Recovery track**
 
-First, run the development server:
+Failed payments are usually a dead-end status. RecoverAI turns every failure into a **diagnosed,
+policy-checked, executed, and audited recovery workflow** — and shows the merchant exactly how much
+revenue was at risk and how much was saved.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+PAYMENT EVENT → FAILURE → AI DIAGNOSIS → POLICY VALIDATION → RECOVERY ACTION → OUTCOME → AUDIT → ANALYTICS
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**The core safety guarantee: the LLM recommends. Application rules authorize.** The AI never executes
+a financial action directly — a deterministic policy engine validates every recommendation against
+bounded rules (cooldowns, amount thresholds, fraud ceilings, duplicate suppression) before anything runs.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quick start
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run setup        # migrate + deterministic seed (creates prisma/dev.db)
+npm run dev          # http://localhost:3000
+```
 
-## Learn More
+No API keys required — the app runs fully offline on the deterministic AI engine. To use a real
+LLM provider, copy `.env.example` → `.env` and set `AI_PROVIDER=gemini|deepseek` with the key.
 
-To learn more about Next.js, take a look at the following resources:
+### All commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server at :3000 |
+| `npm run setup` | Migrate + seed deterministic demo data |
+| `npm run db:reset` | Drop, migrate, reseed (reproducible) |
+| `npm run db:seed` | Reseed only |
+| `npm test` | Vitest suite (44 tests) |
+| `npm run typecheck` | TypeScript |
+| `npm run lint` | ESLint |
+| `npm run build && npm start` | Production build + serve |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## The 60-second tour
 
-## Deploy on Vercel
+1. **Overview** — revenue at risk / recovered / recovery rate, 7-day trend, failure categories, approval queue, audit stream.
+2. **Simulate Failed Payment** (top-right) — pick amount, method, scenario, customer → the full pipeline runs live: gateway failure → AI diagnosis → policy verdict → action → outcome. High-value amounts (₹50,000+) demonstrate the human-approval gate.
+3. **Opportunities** — every open failure with its AI diagnosis, recommended action, confidence, and policy status. Approve/reject gated actions inline.
+4. **Payment detail** — the complete story: customer history the AI weighed, root cause, reasoning, policy decision with justification, action history, gateway attempts, and the chronological audit trail.
+5. **Activity & Audit** — append-only log of every decision (AI, policy, gateway, merchant).
+6. **Safety Model** — the two-layer architecture, active provider status, and the full bounded action catalog.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## What's real vs simulated
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Real (would work with real credentials) | Simulated for the demo |
+|---|---|
+| Failure ingestion, normalization, audit trail, analytics | Payment gateway charge outcomes (deterministic simulator) |
+| AI diagnosis via provider abstraction (Gemini/DeepSeek) | Razorpay webhooks (adapter + `POST /api/webhooks/razorpay` ready; no signature verification in demo mode) |
+| Policy engine, approvals, action lifecycle | Customer responses to links/reminders (probability roll) |
+
+See `AI.md` for the AI architecture, `DEMO.md` for demo runs, `ARCHITECTURE.md` for the system,
+`DECISIONS.md` for trade-offs, `DEMO_SCRIPT.md` for the 5-minute video.
+
+## Environment variables
+
+All optional except `DATABASE_URL` (defaults to local SQLite):
+
+```
+DATABASE_URL=file:./dev.db     # swap to postgresql://… for Postgres
+AI_PROVIDER=mock               # mock | gemini | deepseek
+GEMINI_API_KEY= / DEEPSEEK_API_KEY=
+AI_TIMEOUT_MS=8000
+RAZORPAY_KEY_ID= / RAZORPAY_KEY_SECRET= / RAZORPAY_WEBHOOK_SECRET=
+```
+
+## Testing
+
+44 tests cover failure ingestion, AI structured-output parsing, provider fallback (timeout / garbage /
+schema-invalid / HTTP errors), every policy rule, the high-risk approval gate, the full pipeline,
+analytics math, and input validation. `npm test`.
+
+## Known limitations
+
+- Single demo merchant (schema is multi-merchant ready)
+- No auth (demo environment by design)
+- Outcome simulation is deterministic pseudo-random, not a real gateway
+- Webhook signature verification stubbed (documented at the route)

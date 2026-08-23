@@ -107,6 +107,9 @@ function daysAgoAt(daysAgo: number, hour: number): Date {
   const d = new Date()
   d.setDate(d.getDate() - daysAgo)
   d.setHours(hour, (daysAgo * 13 + hour * 7) % 60, ((daysAgo * 29 + hour * 17) % 60), 0)
+  // Scenario hours later than the current clock would land in the future —
+  // roll back a day so every seeded timestamp is safely in the past.
+  if (d.getTime() > Date.now()) d.setDate(d.getDate() - 1)
   return d
 }
 

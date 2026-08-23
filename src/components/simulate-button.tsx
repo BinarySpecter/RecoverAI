@@ -87,7 +87,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-[2px]" onClick={() => !running && setOpen(false)}>
           <div
-            className="w-full max-w-lg rounded-2xl bg-surface border border-line shadow-2xl animate-fade-up"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-surface border border-line shadow-2xl animate-fade-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-line">

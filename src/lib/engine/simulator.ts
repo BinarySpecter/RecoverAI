@@ -70,7 +70,8 @@ export async function executeSimulatedAction(input: {
     case "SEND_REMINDER":
     case "OFFER_ALTERNATE_METHOD": {
       // Customer-engagement simulation: does the customer respond and complete payment?
-      const rand = seededRandom(hashSeed(`${input.paymentId}:${input.actionId}:engage`))()
+      // Seeded on payment+action (not the action row id) so reseeds replay identically.
+      const rand = seededRandom(hashSeed(`${input.paymentId}:${input.actionType}:engage`))()
       const responded = rand < Math.min(0.9, Math.max(0.05, input.estimatedProbability))
       result = responded
         ? { outcome: "RECOVERED", detail: `Customer responded to "${def.label}" and completed the payment.` }
