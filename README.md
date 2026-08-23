@@ -6,6 +6,23 @@
 
 That one line is the product's core design decision, and every screen in the app is built around it.
 
+## Live Demo
+
+**[Open the RecoverAI demo →](https://recoverai-v90c.onrender.com/)**
+
+RecoverAI is deployed as a live hackathon demo on Render. The hosted demo uses deterministic
+simulated payment outcomes and the offline-safe AI engine, so the complete recovery workflow can be
+demonstrated without external credentials or real money movement.
+
+- **Real in the hosted app:** the application architecture, UI, recovery workflow, policy engine,
+  authorization logic, approval gates, audit trail, and database operations.
+- **Simulated:** payment gateway outcomes, AI diagnosis (deterministic offline-safe engine), demo
+  customer and payment data, and all money movement.
+
+Try it: run the default **₹12,499 temporary decline** (usually recovers automatically), an
+**₹85,000** payment (hits the approval gate — nothing executes until you approve it), and the
+**fraud signal** scenario (escalated to the merchant with no automated customer contact).
+
 ## The problem
 
 Failed payments are usually a dead-end status. Every "card declined" is revenue the merchant has
