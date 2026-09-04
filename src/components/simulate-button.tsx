@@ -139,7 +139,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-2 rounded-lg bg-primary font-semibold text-white shadow-[0_1px_3px_rgba(2,4,43,0.25)] hover:bg-primary-hover active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer ${
+        className={`inline-flex items-center gap-2 rounded-[6px] bg-primary font-semibold text-on-primary shadow-[0_1px_3px_rgba(2,4,43,0.25)] hover:bg-primary-hover active:scale-[0.98] transition-[background-color,transform] duration-150 cursor-pointer ${
           compact ? "px-3 py-1.5 text-[12.5px]" : "px-4 py-2 text-[13.5px]"
         }`}
       >
@@ -156,7 +156,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
           aria-label="Simulate a failed payment"
         >
           <div
-            className="max-h-[92vh] w-full max-w-[540px] overflow-y-auto rounded-2xl border border-line bg-surface shadow-2xl animate-fade-up"
+            className="max-h-[92vh] w-full max-w-[540px] overflow-y-auto rounded-[10px] border border-line bg-surface shadow-2xl animate-fade-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
@@ -236,7 +236,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
                 <button
                   onClick={() => run()}
                   disabled={!amount}
-                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[13px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.99] disabled:opacity-50"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-[6px] bg-primary px-4 py-2.5 text-[13px] font-semibold text-on-primary transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.99] disabled:opacity-50"
                 >
                   Run failure → recovery → outcome
                 </button>
@@ -397,7 +397,7 @@ export function SimulateButton({ compact = false }: { compact?: boolean }) {
                     <button
                       onClick={() => router.push("/payments/" + p?.paymentId)}
                       disabled={!p}
-                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-[12.5px] font-medium text-white transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-40"
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] bg-primary px-3.5 py-1.5 text-[12.5px] font-medium text-on-primary transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-40"
                     >
                       View payment detail
                       <ArrowRight size={12} strokeWidth={2.4} aria-hidden />

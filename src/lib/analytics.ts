@@ -79,7 +79,7 @@ export async function getDashboardMetrics(merchantId: string): Promise<Dashboard
   const trend: DashboardMetrics["trend"] = []
   const today = new Date()
   for (let i = 6; i >= 0; i--) {
-    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i)
+    const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i))
     const next = new Date(day.getTime() + 86_400_000)
     const dayFailed = failed.filter((p) => p.createdAt >= day && p.createdAt < next).length
     const dayRecoveredList = recovered.filter((p) => p.recoveredAt && p.recoveredAt >= day && p.recoveredAt < next)

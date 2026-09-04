@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ScrollText } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { OpenSection } from "@/components/ui"
+import { Section } from "@/components/ui"
 import { AuditTimeline } from "@/components/audit-timeline"
 import { db, getMerchant } from "@/lib/db"
 
@@ -33,18 +33,18 @@ export default async function ActivityPage({
       title="Activity & Audit"
       subtitle="Append-only trail of every pipeline decision — AI, policy, gateway, merchant"
     >
-      <OpenSection
+      <Section
         title="Audit log"
         hint={`${logs.length} ${logs.length === 1 ? "entry" : "entries"}${activeLevel !== "all" ? ` · ${activeLevel} level` : ""} · what happened, who caused it, when, why`}
         action={
-          <nav className="flex gap-0.5 rounded-lg border border-line p-0.5" aria-label="Filter by level">
+          <nav className="flex gap-0.5 rounded-[6px] border border-line p-0.5" aria-label="Filter by level">
             {LEVELS.map((l) => (
               <Link
                 key={l}
                 href={l === "all" ? "/activity" : `/activity?level=${l}`}
                 aria-current={activeLevel === l ? "true" : undefined}
-                className={`rounded-md px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
-                  activeLevel === l ? "bg-primary text-white" : "text-ink-soft hover:bg-surface-sunken"
+                className={`rounded-[4px] px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                  activeLevel === l ? "bg-primary text-on-primary" : "text-ink-soft hover:bg-surface-sunken"
                 }`}
               >
                 {l}
@@ -55,11 +55,11 @@ export default async function ActivityPage({
       >
         {logs.length === 0 ? (
           <div className="flex flex-col items-center gap-2 border-b border-line py-16 text-center">
-            <ScrollText size={24} strokeWidth={1.5} className="text-ink-faint/50" aria-hidden />
+            <ScrollText size={22} strokeWidth={1.5} className="text-ink-faint/50" aria-hidden />
             <p className="text-[13.5px] font-medium text-ink-soft">No audit entries</p>
           </div>
         ) : (
-          <div className="border-b border-line">
+          <div className="pt-4">
             <AuditTimeline
               entries={logs}
               dense
@@ -75,7 +75,7 @@ export default async function ActivityPage({
             />
           </div>
         )}
-      </OpenSection>
+      </Section>
     </Shell>
   )
 }

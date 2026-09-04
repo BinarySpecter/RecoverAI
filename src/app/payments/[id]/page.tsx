@@ -1,129 +1,47 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import {
-  ArrowLeft,
-  Brain,
-  ShieldCheck,
-  History,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Shell } from "@/components/shell"
-import { Panel, Badge, ConfidenceMeter, timestamp, humanize, providerLabel } from "@/components/ui"
+import { Section, Badge, humanize, providerLabel, timestamp } from "@/components/ui"
 import { AuditTimeline } from "@/components/audit-timeline"
 import { ApproveRejectButtons, RunRecoveryButton, ReanalyzeButton } from "@/components/action-buttons"
-import { ACTION_CATALOG } from "@/lib/engine/actions"
+import { ACTION_CATALOG, actionCostPaise } from "@/lib/engine/actions"
 import { db } from "@/lib/db"
 import { formatINR } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
-/** Horizontal decision timeline — the pipeline every payment travels, states from real data. */
-function DecisionTimeline({
-  hasAnalysis,
-  policyDecision,
-  executed,
-  outcome,
+/** Case-file stage spine — one numbered step in the recovery narrative. */
+function Stage({
+  no,
+  label,
+  tone,
+  children,
 }: {
-  hasAnalysis: boolean
-  policyDecision: string | null
-  executed: boolean
-  outcome: string | null
+  no: string
+  label: string
+  tone: string
+  children: React.ReactNode
 }) {
-  const steps = [
-    { key: "failure", label: "Failure", done: true, tone: "risk" as const, caption: null as string | null },
-    { key: "ai", label: "AI diagnosis", done: hasAnalysis, tone: "violet" as const, caption: null },
-    {
-      key: "policy",
-      label: "Policy",
-      done: policyDecision !== null,
-      tone: "brand" as const,
-      caption:
-        policyDecision === "NEEDS_APPROVAL"
-          ? "gated"
-          : policyDecision === "REJECTED"
-            ? "rejected"
-            : policyDecision === "APPROVED"
-              ? "approved"
-              : null,
-    },
-    { key: "recovery", label: "Recovery", done: executed, tone: "ink" as const, caption: null },
-    {
-      key: "outcome",
-      label: "Outcome",
-      done: outcome !== null && outcome !== "PENDING",
-      tone: outcome === "RECOVERED" ? ("good" as const) : outcome === "FAILED" ? ("risk" as const) : ("warn" as const),
-      caption:
-        outcome === "RECOVERED"
-          ? "recovered"
-          : outcome === "FAILED"
-            ? "not recovered"
-            : outcome === "PENDING_REVIEW"
-              ? "in review"
-              : null,
-    },
-  ]
-  const toneBg = { risk: "bg-risk", violet: "bg-violet", brand: "bg-brand", ink: "bg-primary", good: "bg-good", warn: "bg-warn" }
-  const currentIdx = steps.findIndex((s) => !s.done)
-
   return (
-    <ol className="flex flex-wrap items-center gap-y-3" aria-label="Recovery decision timeline">
-      {steps.map((step, i) => {
-        const isCurrent = i === currentIdx
-        return (
-          <li key={step.key} className="flex items-center">
-            {i > 0 && (
-              <span className={`mx-2.5 h-px w-6 sm:w-9 ${step.done ? "bg-line-strong" : "bg-line"}`} aria-hidden />
-            )}
-            <span className="flex items-center gap-2">
-              <span
-                className={`flex h-[22px] w-[22px] items-center justify-center rounded-full border ${
-                  step.done
-                    ? `border-transparent ${toneBg[step.tone]}`
-                    : isCurrent
-                      ? "border-brand bg-brand-soft"
-                      : "border-line bg-surface"
-                }`}
-              >
-                {step.done ? (
-                  <CheckCircle2 size={12} strokeWidth={2.6} className="text-white" aria-hidden />
-                ) : isCurrent ? (
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse-soft" aria-hidden />
-                ) : (
-                  <span className="h-1.5 w-1.5 rounded-full bg-line-strong" aria-hidden />
-                )}
-              </span>
-              <span
-                className={`text-[11.5px] font-semibold tracking-[0.02em] ${
-                  step.done
-                    ? step.tone === "risk"
-                      ? "text-risk"
-                      : step.tone === "violet"
-                        ? "text-violet"
-                        : step.tone === "brand"
-                          ? "text-brand-deep"
-                          : step.tone === "good"
-                            ? "text-good"
-                            : step.tone === "warn"
-                              ? "text-warn"
-                              : "text-ink"
-                    : isCurrent
-                      ? "text-brand-deep"
-                      : "text-ink-faint"
-                }`}
-              >
-                {step.label}
-                {step.caption && <span className="ml-1 font-normal text-ink-faint">· {step.caption}</span>}
-              </span>
-            </span>
-          </li>
-        )
-      })}
-    </ol>
+    <li className="relative flex gap-4 pb-10 last:pb-0">
+      <div className="flex flex-col items-center">
+        <span
+          className={`tnum z-10 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border font-mono text-[10px] font-semibold ${tone}`}
+        >
+          {no}
+        </span>
+        <span className="mt-1 w-px flex-1 bg-line" aria-hidden />
+      </div>
+      <div className="min-w-0 flex-1 pb-1">
+        <p className="label-caps pt-1.5 text-ink-faint">{label}</p>
+        <div className="mt-2.5">{children}</div>
+      </div>
+    </li>
   )
 }
 
+/** One case, read top to bottom — a case file, not a collection of cards. */
 export default async function PaymentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
@@ -141,22 +59,30 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
   if (!payment) notFound()
 
   const audit = await db.auditLog.findMany({ where: { paymentId: id }, orderBy: { createdAt: "asc" } })
-  const latestAnalysis = payment.analyses[0]
-  const latestAction = payment.actions[0]
+  const analysis = payment.analyses[0]
+  const action = payment.actions[0]
   const awaitingAction = payment.actions.find((a) => a.status === "AWAITING_APPROVAL")
-  const isFailed = payment.status === "FAILED"
-  const isClosed =
-    Boolean(latestAction) &&
-    (latestAction.status === "REJECTED" || latestAction.status === "SKIPPED" || latestAction.actionType === "DO_NOTHING")
+  const failed = payment.status === "FAILED"
+  const closed =
+    Boolean(action) &&
+    (action.status === "REJECTED" || action.status === "SKIPPED" || action.actionType === "DO_NOTHING")
 
   const heroTone =
     payment.status === "RECOVERED" ? "text-good" : payment.status === "FAILED" ? "text-risk" : "text-ink"
+
+  const def = action ? ACTION_CATALOG[action.actionType as keyof typeof ACTION_CATALOG] : null
+  const economics =
+    action && def
+      ? {
+          expected: Math.round(payment.amount * (action.estimatedRecoveryProbability || def.efficacy)),
+          cost: actionCostPaise(action.actionType as keyof typeof ACTION_CATALOG),
+        }
+      : null
 
   const paymentFacts: [string, React.ReactNode][] = [
     ["Order", <span key="o" className="font-mono text-[11.5px]">{payment.orderId}</span>],
     ["Amount", formatINR(payment.amount)],
     ["Method", payment.method],
-    ["Status", <Badge key="s" value={payment.status} />],
     ["Retries", String(payment.retryCount)],
     ["Source", payment.source],
     ["Created", timestamp(payment.createdAt)],
@@ -174,14 +100,7 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
     ["Failed payments", <span key="fp" className="tnum font-semibold text-risk">{payment.customer.failedPayments}</span>],
     ["Lifetime value", formatINR(payment.customer.lifetimeValue)],
     ["Avg order", formatINR(payment.customer.avgOrderValue)],
-    [
-      "Subscription",
-      payment.customer.subscriptionActive ? (
-        <Badge key="sub" value="SUBSCRIPTION_ACTIVE" />
-      ) : (
-        <span key="sub" className="text-ink-faint">None</span>
-      ),
-    ],
+    ["Subscription", payment.customer.subscriptionActive ? payment.customer.subscriptionPlan ?? "Active" : "None"],
     [
       "Risk score",
       <span
@@ -198,215 +117,252 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
   return (
     <Shell
       active="/opportunities"
-      title={payment.description ?? "Payment"}
+      title={payment.description ?? "Payment case file"}
       subtitle={`${payment.orderId} · ${payment.customer.name} · ${payment.method}`}
     >
       <Link
         href="/opportunities"
         className="mb-4 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-soft hover:text-brand-deep"
       >
-        <ArrowLeft size={14} aria-hidden /> Work queue
+        <ArrowLeft size={14} aria-hidden /> Recovery queue
       </Link>
 
-      {/* ================= HERO: amount + decision timeline ================= */}
-      <Panel className="px-7 py-6 lg:px-9">
+      {/* ============ CASE HEADER ============ */}
+      <section className="animate-fade-up border-b border-line pb-6">
         <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
           <div>
             <p className="label-caps text-ink-faint">
-              {payment.status === "RECOVERED" ? "Recovered" : payment.status === "FAILED" ? "At risk" : "Payment"}
+              {payment.status === "RECOVERED" ? "Recovered case" : payment.status === "FAILED" ? "Payment recovery opportunity" : "Payment case"}
             </p>
-            <p className={`display-money mt-1.5 text-[38px] leading-none ${heroTone}`}>{formatINR(payment.amount)}</p>
+            <p className={`display-money mt-1.5 text-[40px] leading-none ${heroTone}`}>{formatINR(payment.amount)}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge value={payment.status} />
-              {latestAnalysis && (
-                <span className="rounded-full border border-violet/25 bg-violet-soft px-2 py-0.5 text-[11px] font-medium text-violet">
-                  AI: {humanize(latestAnalysis.recommendedAction)}
-                </span>
-              )}
               {payment.failure && <Badge value={payment.failure.category} />}
-              {latestAnalysis && <Badge value={latestAnalysis.severity} />}
+              {analysis && <Badge value={analysis.severity} />}
+              <span className="tnum rounded-[5px] border border-line bg-surface-sunken px-1.5 py-0.5 font-mono text-[10.5px] text-ink-soft">
+                {payment.method} · {payment.orderId}
+              </span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-3">
             {awaitingAction && <ApproveRejectButtons actionId={awaitingAction.id} />}
-            {isFailed && !awaitingAction && !isClosed && (
+            {failed && !awaitingAction && !closed && (
               <RunRecoveryButton paymentId={payment.id} label="Run recovery pipeline" />
             )}
-            {latestAnalysis && isFailed && <ReanalyzeButton paymentId={payment.id} />}
+            {analysis && failed && <ReanalyzeButton paymentId={payment.id} />}
           </div>
         </div>
-        <div className="mt-6 border-t border-line pt-5">
-          <DecisionTimeline
-            hasAnalysis={Boolean(latestAnalysis)}
-            policyDecision={latestAction?.policyDecision ?? null}
-            executed={Boolean(latestAction?.executedAt)}
-            outcome={latestAction?.outcome ?? null}
-          />
-        </div>
-      </Panel>
+      </section>
 
-      <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-5">
-        {/* ============ Left: the decision story (open sections, accent rules) ============ */}
-        <div className="space-y-8 lg:col-span-3">
-          {/* Layer 1 — AI */}
-          <section>
-            <header className="flex flex-wrap items-baseline justify-between gap-x-4 pb-3">
-              <div className="flex items-baseline gap-3">
-                <Brain size={14} className="self-center text-violet" strokeWidth={2.2} aria-hidden />
-                <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-ink">AI diagnosis</h2>
-                <span className="label-caps text-violet/80">Layer 1 · advisory</span>
-              </div>
-              {latestAnalysis && (
-                <span className="text-[11px] text-ink-faint">
-                  {providerLabel(latestAnalysis.provider, latestAnalysis.usedFallback)}
-                </span>
-              )}
-            </header>
-            <div className="border-t-2 border-violet/30" aria-hidden />
-            {!latestAnalysis ? (
-              <p className="py-6 text-[12.5px] text-ink-faint">
-                No AI analysis yet — run the recovery pipeline to generate a diagnosis.
+      <div className="mt-8 grid gap-x-14 gap-y-10 lg:grid-cols-[1.6fr_1fr]">
+        {/* ============ THE NARRATIVE ============ */}
+        <div className="min-w-0">
+          {/* 01 — FAILURE */}
+          <Stage
+            no="01"
+            label="Failure"
+            tone="border-risk/30 bg-risk-soft text-risk"
+          >
+            <p className="text-[13.5px] font-semibold text-ink">
+              {payment.failure ? humanize(payment.failure.category) : "Payment failed"}
+            </p>
+            {payment.failure?.rawMessage && (
+              <p className="mt-0.5 text-[12.5px] text-ink-soft">{payment.failure.rawMessage}</p>
+            )}
+            <p className="mt-1.5 text-[11.5px] text-ink-faint">
+              attempt #{payment.attempts.length} · {payment.failure?.rawCode ?? ""} ·{" "}
+              {payment.attempts[0]?.latencyMs ? `${payment.attempts[0].latencyMs}ms` : ""} ·{" "}
+              {timestamp(payment.createdAt)}
+            </p>
+          </Stage>
+
+          {/* 02 — DIAGNOSIS */}
+          <Stage no="02" label="Diagnosis" tone="border-violet/30 bg-violet-soft text-violet">
+            {!analysis ? (
+              <p className="text-[12.5px] text-ink-faint">
+                No diagnosis yet — run the recovery pipeline to generate one.
               </p>
             ) : (
-              <div className="space-y-5 pt-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="label-caps text-ink-faint">Likely failure category</p>
-                    <p className="mt-1 text-[14px] font-semibold text-ink">{humanize(latestAnalysis.failureCategory)}</p>
-                  </div>
-                  <div>
-                    <p className="label-caps text-ink-faint">Recommended action</p>
-                    <p className="mt-1 text-[14px] font-semibold text-ink">{humanize(latestAnalysis.recommendedAction)}</p>
-                  </div>
+              <>
+                <p className="text-[13.5px] font-semibold text-ink">{analysis.rootCause}</p>
+                <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-ink-faint">
+                  <span>
+                    category:{" "}
+                    <span className="font-semibold text-ink">{humanize(analysis.failureCategory)}</span>
+                  </span>
+                  <span>
+                    severity: <span className="font-semibold text-ink">{analysis.severity}</span>
+                  </span>
+                  <span>
+                    by{" "}
+                    <span className="font-semibold text-violet">
+                      {providerLabel(analysis.provider, analysis.usedFallback)}
+                    </span>
+                  </span>
+                </p>
+                <p className="mt-2 max-w-xl rounded-[6px] border-l-2 border-violet/40 bg-violet-soft/40 py-1.5 pl-3 text-[12px] leading-relaxed text-ink-soft">
+                  {analysis.customerContext}
+                </p>
+              </>
+            )}
+          </Stage>
+
+          {/* 03 — AI RECOMMENDATION */}
+          <Stage no="03" label="AI recommendation" tone="border-violet/30 bg-violet-soft text-violet">
+            {!analysis ? (
+              <p className="text-[12.5px] text-ink-faint">Nothing recommended yet.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-baseline gap-x-3">
+                  <p className="text-[15px] font-bold tracking-[-0.01em] text-ink">
+                    {humanize(analysis.recommendedAction).toUpperCase()}
+                  </p>
+                  <span className="tnum rounded-[5px] bg-violet-soft px-1.5 py-0.5 font-mono text-[11px] font-semibold text-violet">
+                    confidence {analysis.confidence.toFixed(2)}
+                  </span>
                 </div>
-                <div className="grid items-start gap-4 sm:grid-cols-2">
-                  <ConfidenceMeter value={latestAnalysis.confidence} label="Confidence" tone="violet" />
-                  <ConfidenceMeter value={latestAnalysis.estimatedRecoveryProbability} label="Est. recovery probability" />
+                <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-ink-soft">{analysis.reasoning}</p>
+              </>
+            )}
+          </Stage>
+
+          {/* 04 — POLICY DECISION */}
+          <Stage
+            no="04"
+            label="Policy decision"
+            tone={
+              action?.policyDecision === "REJECTED"
+                ? "border-risk/30 bg-risk-soft text-risk"
+                : action?.policyDecision === "NEEDS_APPROVAL"
+                  ? "border-warn/30 bg-warn-soft text-warn"
+                  : "border-brand/30 bg-brand-soft text-brand-deep"
+            }
+          >
+            {!action ? (
+              <p className="text-[12.5px] text-ink-faint">Policy has not evaluated this case yet.</p>
+            ) : action.policyDecision === "REJECTED" ? (
+              <div className="rounded-[8px] border border-risk/25 bg-risk-soft px-4 py-3">
+                <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-risk">
+                  <span className="h-2 w-2 rounded-full bg-risk" aria-hidden />
+                  Policy refused
+                </p>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-ink">{action.policyReason}</p>
+                <p className="mt-2 text-[11px] text-ink-faint">
+                  The AI recommended {humanize(action.actionType).toLowerCase()}; the application refused it. This action
+                  was never executed.
+                </p>
+              </div>
+            ) : action.policyDecision === "NEEDS_APPROVAL" ? (
+              <div className="rounded-[8px] border border-warn/30 bg-warn-soft px-4 py-3">
+                <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-warn">
+                  <span className="h-2 w-2 rounded-full bg-warn" aria-hidden />
+                  High value + risk — merchant approval required
+                </p>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-ink">{action.policyReason}</p>
+                <div className="mt-3">
+                  <ApproveRejectButtons actionId={action.id} />
                 </div>
-                <div>
-                  <p className="label-caps text-ink-faint">Root cause</p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-ink">{latestAnalysis.rootCause}</p>
-                </div>
-                <div>
-                  <p className="label-caps text-ink-faint">Why this action — AI reasoning</p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{latestAnalysis.reasoning}</p>
-                </div>
-                <div>
-                  <p className="label-caps text-ink-faint">Customer context the AI weighed</p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{latestAnalysis.customerContext}</p>
-                </div>
+              </div>
+            ) : (
+              <div className="rounded-[8px] border border-brand/20 bg-brand-soft/60 px-4 py-3">
+                <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-brand-deep">
+                  <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
+                  Allowed
+                </p>
+                <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-ink-soft">
+                  {action.policyReason}
+                </p>
               </div>
             )}
-          </section>
 
-          {/* Layer 2 — Policy */}
-          <section>
-            <header className="flex flex-wrap items-baseline justify-between gap-x-4 pb-3">
-              <div className="flex items-baseline gap-3">
-                <ShieldCheck size={14} className="self-center text-brand-deep" strokeWidth={2.2} aria-hidden />
-                <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-ink">Policy validation & actions</h2>
-                <span className="label-caps text-brand-deep/80">Layer 2 · authorization</span>
-              </div>
-            </header>
-            <div className="border-t-2 border-brand/30" aria-hidden />
-            {payment.actions.length === 0 ? (
-              <p className="py-6 text-[12.5px] text-ink-faint">
-                No recovery actions yet — verdicts appear here once the pipeline runs.
+            {/* Economics — expected value vs cost, for every decided action */}
+            {economics && (
+              <dl className="mt-3 grid max-w-md grid-cols-3 gap-px overflow-hidden rounded-[6px] border border-line bg-line">
+                <div className="bg-surface px-3 py-2.5">
+                  <dt className="label-caps text-ink-faint">Expected recovery</dt>
+                  <dd className="display-money mt-1 text-[15px] text-ink">{formatINR(economics.expected)}</dd>
+                </div>
+                <div className="bg-surface px-3 py-2.5">
+                  <dt className="label-caps text-ink-faint">Action cost</dt>
+                  <dd className="display-money mt-1 text-[15px] text-ink-soft">{formatINR(economics.cost)}</dd>
+                </div>
+                <div className="bg-surface px-3 py-2.5">
+                  <dt className="label-caps text-ink-faint">Expected net value</dt>
+                  <dd
+                    className={`display-money mt-1 text-[15px] ${
+                      economics.expected - economics.cost > 0 ? "text-good" : "text-risk"
+                    }`}
+                  >
+                    {economics.expected - economics.cost > 0 ? "+" : ""}
+                    {formatINR(economics.expected - economics.cost)}
+                  </dd>
+                </div>
+              </dl>
+            )}
+          </Stage>
+
+          {/* 05 — EXECUTION */}
+          <Stage no="05" label="Execution" tone="border-line-strong bg-surface-sunken text-ink-soft">
+            {!action?.executedAt ? (
+              <p className="text-[12.5px] text-ink-faint">
+                {action?.status === "AWAITING_APPROVAL"
+                  ? "Not executed — waiting for your approval."
+                  : action?.policyDecision === "REJECTED"
+                    ? "Not executed — refused by policy."
+                    : "Nothing executed yet."}
               </p>
             ) : (
-              <div className="divide-y divide-line">
-                {payment.actions.map((a) => {
-                  const def = ACTION_CATALOG[a.actionType as keyof typeof ACTION_CATALOG]
-                  const gated = a.policyDecision === "NEEDS_APPROVAL"
-                  const rejected = a.policyDecision === "REJECTED"
-                  return (
-                    <article key={a.id} className="py-4 first:pt-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13.5px] font-semibold text-ink">{humanize(a.actionType)}</span>
-                        <Badge value={a.policyDecision} />
-                        <Badge value={a.status} />
-                        <span className="tnum ml-auto font-mono text-[10.5px] text-ink-faint">{timestamp(a.createdAt)}</span>
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-                        <span className="font-medium text-violet">
-                          AI recommended {a.actionType.replace(/_/g, " ").toLowerCase()}
-                        </span>
-                        <span aria-hidden className="text-ink-faint/60">→</span>
-                        <span
-                          className={`inline-flex items-center gap-1 font-semibold ${
-                            gated ? "text-warn" : rejected ? "text-risk" : "text-good"
-                          }`}
-                        >
-                          {gated ? (
-                            <AlertTriangle size={10} strokeWidth={2.6} aria-hidden />
-                          ) : rejected ? (
-                            <XCircle size={10} strokeWidth={2.6} aria-hidden />
-                          ) : (
-                            <CheckCircle2 size={10} strokeWidth={2.6} aria-hidden />
-                          )}
-                          policy {a.policyDecision === "APPROVED" ? "authorized" : gated ? "requires approval" : "rejected"}
-                        </span>
-                        {a.approvedBy && (
-                          <>
-                            <span aria-hidden className="text-ink-faint/60">→</span>
-                            <span className="font-medium text-ink-soft">you approved ({a.approvedBy})</span>
-                          </>
-                        )}
-                      </div>
-
-                      {def && a.policyDecision === "APPROVED" && (
-                        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1" aria-label="Policy checks">
-                          {[
-                            `compatible with ${humanize(payment.failure?.category ?? "failure")}`,
-                            "cooldown satisfied",
-                            `under ${def.approvalThreshold > 1e12 ? "no" : formatINR(def.approvalThreshold)} threshold`,
-                            "below risk ceiling",
-                          ].map((check) => (
-                            <li key={check} className="flex items-center gap-1.5 text-[11.5px] text-ink-soft">
-                              <CheckCircle2 size={11} strokeWidth={2.4} className="text-good" aria-hidden />
-                              {check}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-                        <span className="font-semibold text-ink">Reason:</span> {a.policyReason}
-                      </p>
-                      {a.outcomeDetail && (
-                        <p
-                          className={`mt-1 text-[12.5px] font-medium leading-relaxed ${
-                            a.outcome === "RECOVERED" ? "text-good" : a.outcome === "FAILED" ? "text-risk" : "text-ink-soft"
-                          }`}
-                        >
-                          {a.outcomeDetail}
-                        </p>
-                      )}
-                    </article>
-                  )
-                })}
-              </div>
+              <p className="text-[12.5px] leading-relaxed text-ink-soft">
+                <span className="font-semibold text-ink">{humanize(action.actionType)}</span> executed at{" "}
+                {timestamp(action.executedAt)}
+                {action.approvedBy ? ` · approved by ${action.approvedBy}` : ""}
+              </p>
             )}
-          </section>
+          </Stage>
 
-          {/* Audit */}
-          <section>
-            <header className="flex items-baseline gap-3 pb-3">
-              <History size={14} className="self-center text-ink-faint" strokeWidth={2.2} aria-hidden />
-              <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-ink">Audit trail</h2>
-              <span className="label-caps text-ink-faint">immutable record</span>
-            </header>
-            <div className="border-t-2 border-line-strong/60" aria-hidden />
-            <AuditTimeline entries={audit} />
-          </section>
+          {/* 06 — OUTCOME */}
+          <Stage
+            no="06"
+            label="Outcome"
+            tone={
+              action?.outcome === "RECOVERED"
+                ? "border-good/30 bg-good-soft text-good"
+                : action?.outcome === "FAILED"
+                  ? "border-risk/30 bg-risk-soft text-risk"
+                  : "border-line-strong bg-surface-sunken text-ink-soft"
+            }
+          >
+            {!action?.outcome || action.outcome === "PENDING" ? (
+              <p className="text-[12.5px] text-ink-faint">
+                {payment.status === "RECOVERED"
+                  ? "Payment captured before any recovery action completed."
+                  : action?.status === "AWAITING_APPROVAL"
+                    ? "Awaiting your decision."
+                    : "No outcome yet."}
+              </p>
+            ) : action.outcome === "RECOVERED" ? (
+              <div className="rounded-[8px] border border-good/25 bg-good-soft px-4 py-3">
+                <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-good">
+                  <span className="h-2 w-2 rounded-full bg-good" aria-hidden />
+                  Recovered
+                </p>
+                <p className="display-money mt-1.5 text-[26px] leading-none text-good">
+                  {formatINR(payment.amount)}
+                </p>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-ink-soft">{action.outcomeDetail}</p>
+              </div>
+            ) : action.outcome === "PENDING_REVIEW" ? (
+              <p className="text-[12.5px] leading-relaxed text-ink-soft">{action.outcomeDetail}</p>
+            ) : (
+              <p className="text-[12.5px] leading-relaxed text-ink-soft">{action.outcomeDetail}</p>
+            )}
+          </Stage>
         </div>
 
-        {/* ============ Right: the facts (definition lists, hairlines, no boxes) ============ */}
-        <div className="space-y-8 lg:col-span-2">
-          <section>
-            <h3 className="label-caps pb-2.5 text-ink-faint">Payment</h3>
-            <dl className="divide-y divide-line border-y border-line">
+        {/* ============ THE RECORD (tertiary) ============ */}
+        <div className="min-w-0 space-y-8">
+          <Section title="Payment record" hint="identifiers and gateway facts">
+            <dl className="divide-y divide-line border-b border-line pt-1">
               {paymentFacts.map(([label, value]) => (
                 <div key={String(label)} className="flex items-baseline justify-between gap-4 py-[7px]">
                   <dt className="text-[12px] text-ink-faint">{label}</dt>
@@ -414,11 +370,10 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
                 </div>
               ))}
             </dl>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className="label-caps pb-2.5 text-ink-faint">Customer history · signals the AI weighed</h3>
-            <dl className="divide-y divide-line border-y border-line">
+          <Section title="Customer signals" hint="what the AI weighed">
+            <dl className="divide-y divide-line border-b border-line pt-1">
               {customerFacts.map(([label, value]) => (
                 <div key={String(label)} className="flex items-baseline justify-between gap-4 py-[7px]">
                   <dt className="text-[12px] text-ink-faint">{label}</dt>
@@ -426,11 +381,13 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
                 </div>
               ))}
             </dl>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className="label-caps pb-2.5 text-ink-faint">Gateway attempts</h3>
-            <ol className="divide-y divide-line border-y border-line">
+          <Section title="Gateway attempts" hint="raw charge record">
+            <ol className="divide-y divide-line border-b border-line pt-1">
+              {payment.attempts.length === 0 && (
+                <li className="py-3 text-[12px] text-ink-faint">No gateway attempts recorded.</li>
+              )}
               {payment.attempts.map((att) => (
                 <li key={att.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
@@ -446,9 +403,18 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
                 </li>
               ))}
             </ol>
-          </section>
+          </Section>
         </div>
       </div>
+
+      {/* ============ AUDIT TRAIL ============ */}
+      <section className="mt-10">
+        <Section title="Audit trail" hint="append-only · payloads expandable">
+          <div className="pt-4">
+            <AuditTimeline entries={audit} />
+          </div>
+        </Section>
+      </section>
     </Shell>
   )
 }

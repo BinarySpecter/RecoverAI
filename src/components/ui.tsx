@@ -3,19 +3,26 @@ import { formatINR } from "@/lib/types"
 
 /** ---------- Surfaces ---------- */
 
-/** Elevated panel — reserved for the one or two most important surfaces on a page. */
+/**
+ * Elevated panel — reserved for the one or two most important surfaces on a
+ * page. Flat, hairline-bordered, barely raised: elevation is a privilege.
+ */
 export function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <section
-      className={`rounded-[10px] border border-line bg-surface shadow-[0_1px_3px_rgba(2,4,43,0.06),0_1px_2px_rgba(2,4,43,0.04)] ${className}`}
+      className={`rounded-[8px] border border-line bg-surface shadow-[0_1px_2px_rgba(27,28,33,0.05)] ${className}`}
     >
       {children}
     </section>
   )
 }
 
-/** Open canvas section — title over a hairline rule, no box chrome. */
-export function OpenSection({
+/**
+ * Open canvas section — title over a hairline rule, no box chrome.
+ * The default organizing unit: most content lives in open sections so the
+ * page reads as one canvas, not a grid of boxes.
+ */
+export function Section({
   title,
   hint,
   action,
@@ -30,20 +37,23 @@ export function OpenSection({
 }) {
   return (
     <section className={className}>
-      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-3">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-2.5">
         <div className="flex flex-wrap items-baseline gap-x-3">
           <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
           {hint && <span className="text-[11.5px] text-ink-faint">{hint}</span>}
         </div>
         {action}
       </header>
-      <div className="border-t border-line-strong/70" aria-hidden />
+      <div className="border-t border-line" aria-hidden />
       {children}
     </section>
   )
 }
 
-/** Status as dot + small-caps text — the non-pill treatment for dense tables. */
+/** Backwards-compatible alias for the section primitive. */
+export const OpenSection = Section
+
+/** Status as dot + small-caps text — the non-pill treatment for dense rows. */
 export function StatusText({ value, className = "" }: { value: string; className?: string }) {
   const tone =
     /RECOVERED|CAPTURED|APPROVED/.test(value)
@@ -62,53 +72,9 @@ export function StatusText({ value, className = "" }: { value: string; className
           ? "bg-warn"
           : "bg-ink-faint"
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.06em] uppercase ${tone} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.07em] uppercase ${tone} ${className}`}>
       <span aria-hidden className={`h-[5px] w-[5px] rounded-full ${dot}`} />
       {humanize(value)}
-    </span>
-  )
-}
-
-/** ---------- Cards ---------- */
-
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <section className={`rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgba(2,4,43,0.05)] ${className}`}>
-      {children}
-    </section>
-  )
-}
-
-export function CardHeader({
-  title,
-  subtitle,
-  action,
-  eyebrow,
-}: {
-  title: string
-  subtitle?: string
-  action?: ReactNode
-  eyebrow?: string
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
-      <div className="min-w-0">
-        {eyebrow && (
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint">{eyebrow}</p>
-        )}
-        <h2 className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-[12px] leading-snug text-ink-faint">{subtitle}</p>}
-      </div>
-      {action}
-    </div>
-  )
-}
-
-/** Micro-label for section eyebrows and table headers. */
-export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint ${className}`}>
-      {children}
     </span>
   )
 }
@@ -147,7 +113,7 @@ export function Badge({ value, className = "", children }: { value: string; clas
   const style = BADGE_STYLES[value] ?? { cls: "bg-surface-sunken text-ink-soft", dot: "bg-ink-faint" }
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium tracking-[0.01em] whitespace-nowrap ${style.cls} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-[5px] px-1.5 py-0.5 text-[10.5px] font-medium tracking-[0.01em] whitespace-nowrap ${style.cls} ${className}`}
     >
       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
       {children ?? humanize(value)}
@@ -166,9 +132,10 @@ export function humanize(value: string): string {
 /** ---------- Actor attribution — who/what caused an audit event ---------- */
 
 /**
- * Customer-facing provider naming. Implementation detail (mock/deterministic-rules-v1)
- * stays in the audit trail; surfaces get product language. Honest: "offline-safe"
- * states exactly what the deterministic engine guarantees.
+ * Customer-facing provider naming. Implementation detail
+ * (mock/deterministic-rules-v1) stays in the audit trail; surfaces get
+ * product language. Honest: "offline-safe" states exactly what the
+ * deterministic engine guarantees.
  */
 export function providerLabel(provider: string, usedFallback: boolean): string {
   if (usedFallback || provider === "fallback") return "deterministic fallback · offline-safe"
@@ -227,11 +194,11 @@ export function ConfidenceMeter({
   return (
     <div className="min-w-[128px]">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">{label}</span>
+        <span className="label-caps text-ink-faint">{label}</span>
         <span className={`tnum text-[13px] font-semibold ${text}`}>{value.toFixed(2)}</span>
       </div>
       <div
-        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-track"
+        className="mt-1.5 h-1 overflow-hidden rounded-full bg-track"
         role="meter"
         aria-valuenow={pct}
         aria-valuemin={0}

@@ -4,7 +4,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ------------------------------------------------------------------ */
-/* Theme tokens — utilities reference vars so .dark flips every surface */ 
+/* Theme tokens — utilities reference vars so .dark flips every surface */
 /* ------------------------------------------------------------------ */
 @theme inline {
   /* Canvas + surfaces */
@@ -41,6 +41,7 @@
   /* Interaction primitives */
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
   --color-track: var(--track);
   --color-backdrop: var(--backdrop);
   --color-rule: var(--rule);
@@ -49,86 +50,86 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* ---------------- Light (approved theme — values unchanged) ---------------- */
+/* ---------------- Light — warm paper, ink, one vermilion identity accent ---------------- */
 :root {
-  --background: #f4f5f8;
-  --foreground: #101a30;
-  --ink: #0b1030;
-  --ink-soft: #46536e;
-  --ink-faint: #7d879c;
+  --background: #f7f6f2;
+  --foreground: #1a1c20;
+  --ink: #1a1c20;
+  --ink-soft: #565960;
+  --ink-faint: #8e9096;
   --surface: #ffffff;
-  --surface-sunken: #f7f8fa;
-  --line: #e4e7ee;
-  --line-strong: #cdd3df;
+  --surface-sunken: #efeee9;
+  --line: #e7e5de;
+  --line-strong: #d2cfc4;
 
-  --navy: #0b1030;
-  --navy-soft: #171e4a;
-  --navy-line: #232b5c;
-  --navy-text: #a8b1d6;
-  --navy-bright: #ffffff;
+  --navy: #1b1c21;
+  --navy-soft: #25262d;
+  --navy-line: #2e3038;
+  --navy-text: #aaabb4;
+  --navy-bright: #f5f5f2;
 
-  --brand: #2b6bf3;
-  --brand-deep: #0b50cf;
-  --brand-soft: #e9f0fe;
-  --risk: #d61f4b;
-  --risk-soft: #fdecef;
-  --good: #0e8052;
-  --good-soft: #e7f4ee;
-  --warn: #b56200;
-  --warn-soft: #fdf2e2;
-  --violet: #6d4fe0;
-  --violet-soft: #efecfb;
+  --brand: #c24315;
+  --brand-deep: #97330e;
+  --brand-soft: #f9ece4;
+  --risk: #b02a37;
+  --risk-soft: #f9e9eb;
+  --good: #17794c;
+  --good-soft: #e6f2ec;
+  --warn: #a05b05;
+  --warn-soft: #faf0dd;
+  --violet: #5648bd;
+  --violet-soft: #eeebfb;
 
-  --primary: #0b1030;
-  --primary-hover: #171e4a;
-  --track: #eef0f4;
-  --backdrop: rgba(11, 16, 48, 0.45);
-  --rule: rgba(11, 16, 48, 0.8);
+  --primary: #1b1c21;
+  --primary-hover: #2b2d35;
+  --on-primary: #ffffff;
+  --track: #ecebe4;
+  --backdrop: rgba(27, 28, 33, 0.5);
+  --rule: rgba(27, 28, 33, 0.8);
 
-  --scrollbar: #c4cbda;
-  --selection: #cfe1fd;
+  --scrollbar: #c9c7bd;
+  --selection: #f4d9cc;
 }
 
-/* ---------------- Dark — a designed night palette, not an inversion ---------------- */
+/* ---------------- Dark — warm charcoal, lifted accents, same identity ---------------- */
 .dark {
-  --background: #0a0d18;
-  --foreground: #e9edfb;
-  --ink: #eef1fb;
-  --ink-soft: #a7b0cf;
-  --ink-faint: #8b94b3;
-  --surface: #12172b;
-  --surface-sunken: #171d34;
-  --line: #242b47;
-  --line-strong: #363f63;
+  --background: #131417;
+  --foreground: #efeee9;
+  --ink: #efeee9;
+  --ink-soft: #a9acb3;
+  --ink-faint: #83868e;
+  --surface: #1b1c20;
+  --surface-sunken: #212226;
+  --line: #2b2d33;
+  --line-strong: #3c3e46;
 
-  /* Sidebar keeps its identity, one step above the canvas */
-  --navy: #0e1330;
-  --navy-soft: #1b2350;
-  --navy-line: #262f5f;
-  --navy-text: #a8b1d6;
-  --navy-bright: #ffffff;
+  --navy: #191a1f;
+  --navy-soft: #24252c;
+  --navy-line: #2e3037;
+  --navy-text: #aaabb4;
+  --navy-bright: #f5f5f2;
 
-  /* Semantic accents lift for contrast on dark; meaning unchanged */
-  --brand: #5b8df7;
-  --brand-deep: #7ba6f9;
-  --brand-soft: #1a2445;
-  --risk: #f4587f;
-  --risk-soft: #351529;
-  --good: #37c38f;
-  --good-soft: #0f2b22;
-  --warn: #e5a03c;
-  --warn-soft: #322510;
+  --brand: #f2713d;
+  --brand-deep: #f89a6f;
+  --brand-soft: #331b12;
+  --risk: #ee6068;
+  --risk-soft: #331a20;
+  --good: #3fbf8e;
+  --good-soft: #122920;
+  --warn: #e3a13c;
+  --warn-soft: #33260f;
   --violet: #a08bf0;
-  --violet-soft: #241f45;
+  --violet-soft: #221f3d;
 
-  --primary: #252f5e;
-  --primary-hover: #303c74;
-  --track: #232a45;
-  --backdrop: rgba(3, 5, 14, 0.68);
-  --rule: #46517f;
+  --primary: #eae9e4;
+  --primary-hover: #f4f4f0;
+  --on-primary: #17181d;
+  --track: #26272d;
+  --backdrop: rgba(5, 5, 8, 0.7);
+  --rule: #4a4d57;
 
-  --scrollbar: #2c3355;
-  --selection: #2a3a63;
+  --scrollbar: #2e3037;
+  --selection: #3a2118;
 }
 
 html {
@@ -160,15 +161,15 @@ body {
 /* Display money — the strongest type on any page */
 .display-money {
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  font-weight: 700;
+  letter-spacing: -0.035em;
+  font-weight: 750;
 }
 
-/* Micro caps label */
+/* Micro caps label — used sparingly (restraint: max one per section group) */
 .label-caps {
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 

@@ -43,14 +43,14 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
             {data.map((d, i) => (
               <div key={d.date} className="group relative flex h-full flex-1 flex-col justify-end">
                 <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max -translate-x-1/2 group-hover:block">
-                  <div className="rounded-lg border border-navy-line bg-navy px-3 py-2 text-[10.5px] leading-relaxed text-white shadow-lg">
+                  <div className="rounded-[6px] border border-navy-line bg-navy px-3 py-2 text-[10.5px] leading-relaxed text-navy-bright shadow-lg">
                     <div className="tnum font-mono text-[11px] font-semibold">
                       {i === data.length - 1
                         ? "Today"
                         : new Date(d.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                     </div>
-                    <div className="text-[#ffb3c6]">{d.failed} failed</div>
-                    <div className="text-[#9fe3c2]">{d.recovered} recovered</div>
+                    <div className="text-risk/90">{d.failed} failed</div>
+                    <div className="text-good/90">{d.recovered} recovered</div>
                     {d.recoveredAmount > 0 && (
                       <div className="tnum font-semibold">{formatINR(d.recoveredAmount, { compact: true })} saved</div>
                     )}
@@ -111,7 +111,7 @@ export interface CategoryDatum {
   recovered: number
 }
 
-/** Failure categories: quiet stacked bars with aligned rupee values. */
+/** Failure categories: quiet split bars with aligned rupee values. */
 export function CategoryBars({ data }: { data: CategoryDatum[] }) {
   const max = Math.max(1, ...data.map((d) => d.atRisk + d.recovered))
   return (
@@ -141,7 +141,7 @@ export function CategoryBars({ data }: { data: CategoryDatum[] }) {
   )
 }
 
-function humanizeCategory(value: string): string {
+export function humanizeCategory(value: string): string {
   return value
     .toLowerCase()
     .split("_")

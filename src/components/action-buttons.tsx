@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check, X, Loader2, RefreshCw, Sparkles } from "lucide-react"
+import { Check, X, Loader2, RefreshCw, Zap } from "lucide-react"
 
 function useMutation(url: string, method: "POST" = "POST") {
   const [pending, setPending] = useState(false)
@@ -33,6 +33,11 @@ function useMutation(url: string, method: "POST" = "POST") {
   return { pending, error, run }
 }
 
+const primaryBtn =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] bg-primary font-semibold text-on-primary transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+const ghostBtn =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] border border-line font-medium text-ink-soft transition-[background-color,transform] duration-150 hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50"
+
 export function ApproveRejectButtons({ actionId, compact = false }: { actionId: string; compact?: boolean }) {
   const approve = useMutation(`/api/recovery/${actionId}/approve`)
   const reject = useMutation(`/api/recovery/${actionId}/reject`)
@@ -43,7 +48,7 @@ export function ApproveRejectButtons({ actionId, compact = false }: { actionId: 
         <button
           onClick={() => approve.run()}
           disabled={busy}
-          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
+          className={`${primaryBtn} ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
         >
           {approve.pending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
           {compact ? "Approve" : "Approve & execute"}
@@ -51,10 +56,10 @@ export function ApproveRejectButtons({ actionId, compact = false }: { actionId: 
         <button
           onClick={() => reject.run({ reason: "Rejected from dashboard" })}
           disabled={busy}
-          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line font-medium text-ink-soft transition-[background-color,transform] duration-150 hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50 ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
+          className={`${ghostBtn} ${compact ? "px-2.5 py-1 text-[11.5px]" : "px-3.5 py-1.5 text-[12.5px]"}`}
         >
           {reject.pending ? <Loader2 size={13} className="animate-spin" /> : <X size={13} strokeWidth={3} />}
-          {compact ? "Reject" : "Reject"}
+          Reject
         </button>
       </div>
       {(approve.error || reject.error) && (
@@ -71,9 +76,9 @@ export function RunRecoveryButton({ paymentId, label = "Run AI recovery" }: { pa
       <button
         onClick={() => run()}
         disabled={pending}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-[12px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50"
+        className={`${primaryBtn} px-3 py-1.5 text-[12px]`}
       >
-        {pending ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+        {pending ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} strokeWidth={2.2} />}
         {pending ? "Running…" : label}
       </button>
       {error && <p className="mt-1.5 text-[12px] text-risk">{error}</p>}
@@ -88,7 +93,7 @@ export function ReanalyzeButton({ paymentId }: { paymentId: string }) {
       <button
         onClick={() => run()}
         disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-soft hover:bg-surface-sunken active:scale-[0.98] disabled:opacity-50 transition-[background-color,transform] duration-150 cursor-pointer"
+        className={`${ghostBtn} px-3 py-1.5 text-[12px]`}
       >
         {pending ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
         Re-run AI diagnosis

@@ -69,13 +69,13 @@ export function ThemeToggle({ variant = "segment" }: { variant?: "segment" | "co
     return (
       <button
         onClick={() => setMode(next)}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line px-2 py-1 text-[10.5px] font-medium text-ink-soft transition-colors hover:bg-surface-sunken"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-[5px] border border-navy-line bg-white/[0.03] px-2 py-1 text-[10px] font-medium text-navy-text transition-colors hover:bg-white/[0.07] hover:text-navy-bright"
         aria-label={`Theme: ${current.label}. Switch to ${next}`}
         title={`Theme: ${current.label} — click for ${next}`}
       >
-        <current.icon size={12} aria-hidden />
+        <current.icon size={11} aria-hidden />
         {current.label}
-        <NextIcon size={10} className="text-ink-faint" aria-hidden />
+        <NextIcon size={9} className="opacity-60" aria-hidden />
       </button>
     )
   }

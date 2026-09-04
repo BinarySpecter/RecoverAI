@@ -4,6 +4,7 @@ import { evaluatePolicy } from "@/lib/engine/policy-engine"
 import { executeSimulatedAction } from "@/lib/engine/simulator"
 import { audit } from "@/lib/engine/ingestion"
 import { ACTION_CATALOG } from "@/lib/engine/actions"
+import { withPaymentLock } from "@/lib/engine/lock"
 import type { FailureContext, FailureCategory, ActionType } from "@/lib/types"
 
 /**
@@ -24,6 +25,8 @@ export interface PipelineResult {
   status: string
   outcome?: string
   outcomeDetail?: string
+  /** True when a concurrent/duplicate run found an open action and created nothing new. */
+  alreadyProcessing?: boolean
 }
 
 export async function buildFailureContext(paymentId: string): Promise<FailureContext> {
@@ -106,14 +109,43 @@ function customerQuality(ctx: FailureContext): number {
 
 /** Run the complete pipeline for one failed payment. */
 export async function runRecoveryPipeline(paymentId: string): Promise<PipelineResult> {
-  const payment = await db.payment.findUniqueOrThrow({
-    where: { id: paymentId },
-    include: { actions: true, failure: true, customer: true },
-  })
-  if (payment.status !== "FAILED") throw new Error(`Payment is ${payment.status}, not FAILED — nothing to recover`)
-  if (!payment.failure) throw new Error("Payment has no failure event")
+  // Serialize per payment: two webhook deliveries of the same event must not
+  // both create actions. The lock guarantees exactly one pipeline in flight;
+  // the guard below re-checks state after acquiring it.
+  return withPaymentLock(paymentId, async () => {
+    const payment = await db.payment.findUniqueOrThrow({
+      where: { id: paymentId },
+      include: { actions: true, failure: true, customer: true },
+    })
+    if (payment.status !== "FAILED") throw new Error(`Payment is ${payment.status}, not FAILED — nothing to recover`)
+    if (!payment.failure) throw new Error("Payment has no failure event")
 
-  const ctx = await buildFailureContext(paymentId)
+    // Open-action guard: a payment with an undecided action (PENDING or
+    // AWAITING_APPROVAL) is already being processed — re-entering would stack
+    // a second action on top of the first. Return the existing one untouched.
+    const open = payment.actions.find((a) => a.status === "PENDING" || a.status === "AWAITING_APPROVAL")
+    if (open) {
+      await audit(payment.merchantId, {
+        paymentId,
+        actor: "SYSTEM",
+        event: "recovery.duplicate_suppressed",
+        message:
+          "Duplicate recovery processing detected — existing open action returned untouched, no new action created.",
+        data: { actionId: open.id, actionType: open.actionType, status: open.status },
+      })
+      return {
+        paymentId,
+        analysisId: open.analysisId ?? "",
+        actionId: open.id,
+        actionType: open.actionType as ActionType,
+        policyDecision: open.policyDecision,
+        policyReason: open.policyReason,
+        status: open.status,
+        alreadyProcessing: true,
+      }
+    }
+
+    const ctx = await buildFailureContext(paymentId)
 
   // --- Layer 1: AI diagnosis ---
   const result = await analyzeWithFallback(ctx)
@@ -188,7 +220,14 @@ export async function runRecoveryPipeline(paymentId: string): Promise<PipelineRe
     event: `policy.${verdict.decision.toLowerCase()}`,
     level: verdict.decision === "REJECTED" ? "warn" : "info",
     message: `Policy ${verdict.decision.toLowerCase()} ${result.analysis.recommendedAction}: ${verdict.reason}`,
-    data: { actionId: action.id, decision: verdict.decision, riskLevel: verdict.riskLevel },
+    data: {
+      actionId: action.id,
+      decision: verdict.decision,
+      riskLevel: verdict.riskLevel,
+      // Economic stopping rule numbers — persisted so every refusal/approval
+      // carries its expected-value-vs-cost economics in the audit trail.
+      economics: verdict.economics ?? null,
+    },
   })
 
   // --- Layer 3: execution (only when sanctioned) ---
@@ -226,6 +265,7 @@ export async function runRecoveryPipeline(paymentId: string): Promise<PipelineRe
     policyReason: verdict.reason,
     status: verdict.decision === "NEEDS_APPROVAL" ? "AWAITING_APPROVAL" : "REJECTED",
   }
+  })
 }
 
 /** Merchant approves a gated action → execute it. */
@@ -234,8 +274,16 @@ export async function approveAndExecute(actionId: string, approvedBy = "merchant
     where: { id: actionId },
     include: { payment: { include: { customer: true, failure: true } }, analysis: true },
   })
+  // Serialize per payment so two concurrent approvals cannot both execute the
+  // same action (the status re-check below runs inside the lock).
   if (action.status !== "AWAITING_APPROVAL") throw new Error(`Action is ${action.status}, not AWAITING_APPROVAL`)
   if (!action.payment.failure) throw new Error("Payment has no failure event")
+
+  return withPaymentLock(action.paymentId, async () => {
+    const recheck = await db.recoveryAction.findUniqueOrThrow({ where: { id: actionId } })
+    if (recheck.status !== "AWAITING_APPROVAL") {
+      throw new Error(`Action is ${recheck.status}, not AWAITING_APPROVAL — it was already decided`)
+    }
 
   await audit(action.payment.merchantId, {
     paymentId: action.paymentId,
@@ -270,6 +318,7 @@ export async function approveAndExecute(actionId: string, approvedBy = "merchant
     outcome: exec.outcome,
     outcomeDetail: exec.detail,
   }
+  })
 }
 
 /** Merchant rejects a gated action. */
@@ -279,16 +328,23 @@ export async function rejectAction(actionId: string, reason?: string): Promise<v
     include: { payment: true },
   })
   if (action.status !== "AWAITING_APPROVAL") throw new Error(`Action is ${action.status}, not AWAITING_APPROVAL`)
-  await db.recoveryAction.update({
-    where: { id: actionId },
-    data: { status: "REJECTED", outcome: "FAILED", outcomeDetail: reason ?? "Rejected by merchant" },
-  })
-  await audit(action.payment.merchantId, {
-    paymentId: action.paymentId,
-    actor: "MERCHANT",
-    event: "recovery.rejected",
-    level: "warn",
-    message: `Merchant rejected ${action.actionType} for ${action.payment.orderId}${reason ? `: ${reason}` : ""}`,
-    data: { actionId, reason: reason ?? null },
+
+  return withPaymentLock(action.paymentId, async () => {
+    const recheck = await db.recoveryAction.findUniqueOrThrow({ where: { id: actionId } })
+    if (recheck.status !== "AWAITING_APPROVAL") {
+      throw new Error(`Action is ${recheck.status}, not AWAITING_APPROVAL — it was already decided`)
+    }
+    await db.recoveryAction.update({
+      where: { id: actionId },
+      data: { status: "REJECTED", outcome: "FAILED", outcomeDetail: reason ?? "Rejected by merchant" },
+    })
+    await audit(action.payment.merchantId, {
+      paymentId: action.paymentId,
+      actor: "MERCHANT",
+      event: "recovery.rejected",
+      level: "warn",
+      message: `Merchant rejected ${action.actionType} for ${action.payment.orderId}${reason ? `: ${reason}` : ""}`,
+      data: { actionId, reason: reason ?? null },
+    })
   })
 }
